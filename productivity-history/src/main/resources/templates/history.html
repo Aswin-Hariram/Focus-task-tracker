@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<aside th:replace="~{fragments/layout :: sidebar}"></aside>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main class="page-shell">
+  <div class="page-container history-page">
+    <header class="history-heading">
+      <div>
+        <h1><span class="history-icon" aria-hidden="true"><svg><use th:href="@{/images/icons.svg#history}"/></svg></span> History</h1>
+        <p>View your past tasks, status changes, and activity timeline.</p>
+      </div>
+      <nav class="history-segments surface" aria-label="Activity type">
+        <a th:href="@{/history(query=${query},category=${selectedCategory},from=${from},to=${to},view=${view})}"
+           th:aria-current="${action == null ? 'true' : null}">All activity</a>
+        <a th:each="item : ${actionTabs}"
+           th:href="@{/history(query=${query},category=${selectedCategory},from=${from},to=${to},action=${item},view=${view})}"
+           th:aria-current="${item == action ? 'true' : null}"
+           th:text="${item.name() == 'STATUS_CHANGED' ? 'Status changes' : item.label}">Completed</a>
+      </nav>
+    </header>
+
+    <section class="history-metrics" aria-label="History summary">
+      <article class="history-metric history-blue">
+        <span class="history-icon" aria-hidden="true"><svg><use th:href="@{/images/icons.svg#check}"/></svg></span>
+        <div><strong th:text="${total}">0</strong><span>Total activities</span></div>
+      </article>
+      <article class="history-metric history-green">
+        <span class="history-icon" aria-hidden="true"><svg><use th:href="@{/images/icons.svg#check-circle}"/></svg></span>
+        <div><strong th:text="${completionCount}">0</strong><span>Tasks completed</span></div>
+      </article>
+      <article class="history-metric history-amber">
+        <span class="history-icon" aria-hidden="true"><svg><use th:href="@{/images/icons.svg#arrow}"/></svg></span>
+        <div><strong th:text="${statusCount}">0</strong><span>Status changes</span></div>
+      </article>
+      <article class="history-metric history-purple">
+        <span class="history-icon" aria-hidden="true"><svg><use th:href="@{/images/icons.svg#calendar}"/></svg></span>
+        <div>
+          <strong th:text="${rangeDays != null ? rangeDays + (rangeDays == 1 ? ' day' : ' days') : (from != null or to != null ? 'Custom' : 'All time')}">All time</strong>
+          <span>History range</span>
+          <small th:if="${from != null or to != null}">
+            <span th:if="${from != null}" th:text="${(to == null ? 'From ' : '') + #temporals.format(from, 'd MMM yyyy')}"></span>
+            <span th:if="${to != null}" th:text="${(from == null ? 'Through ' : ' – ') + #temporals.format(to, 'd MMM yyyy')}"></span>
+          </small>
+        </div>
+      </article>
+    </section>
+
+    <div class="history-workspace" th:classappend="${selected == null} ? ' history-no-selection' : ''">
+      <section aria-label="Activity feed">
+        <form class="history-filters" method="get" th:action="@{/history}">
+          <label class="history-mobile-search" for="historyQuery">Search activity
+            <input class="form-control form-control-sm" id="historyQuery" name="query" type="search" th:value="${query}">
+          </label>
+          <input type="hidden" name="view" th:value="${view}">
+          <div class="history-dates">
+            <label for="historyFrom">From<input class="form-control form-control-sm" id="historyFrom" name="from" type="date" th:value="${from}"></label>
+            <label for="historyTo">To<input class="form-control form-control-sm" id="historyTo" name="to" type="date" th:value="${to}"></label>
+          </div>
+          <label class="history-filter-field" for="historyCategory">Category
+            <select class="form-select form-select-sm" id="historyCategory" name="category">
+              <option value="">All categories</option>
+              <option th:each="item : ${categories}" th:value="${item.id}" th:selected="${item.id == selectedCategory}"
+                      th:text="${item.name + (item.archived ? ' (archived)' : '')}">Work</option>
+            </select>
+          </label>
+
+          <button class="btn btn-outline-secondary btn-sm" type="submit">Apply</button>
+          <a th:if="${!#strings.isEmpty(query) or selectedCategory != null or from != null or to != null or action != null}"
+             th:href="@{/history(view=${view},clear='true')}" class="btn btn-link btn-sm" data-clear-filter="history" id="clearHistoryFiltersBtn">Clear</a>
+        </form>
+
+        <div class="history-feed-toolbar">
+          <a class="history-export" th:if="${hasAnalyticsModule == null or hasAnalyticsModule}"
+             th:href="@{/analytics/export(query=${query},category=${selectedCategory},from=${from},to=${to})}">
+            <svg aria-hidden="true"><use th:href="@{/images/icons.svg#download}"/></svg> Completed tasks CSV
+          </a>
+          <a class="history-export" th:href="@{/analytics/export.xlsx(query=${query},category=${selectedCategory},from=${from},to=${to})}">
+            <svg aria-hidden="true"><use th:href="@{/images/icons.svg#download}"/></svg> Completed tasks Excel
+          </a>
+          <nav class="history-segments surface" aria-label="Feed layout">
+            <a th:href="@{/history(query=${query},category=${selectedCategory},from=${from},to=${to},action=${action},event=${selected?.id},tab=${tab},view='list')}"
+               th:aria-current="${!timeline ? 'true' : null}">List</a>
+            <a th:href="@{/history(query=${query},category=${selectedCategory},from=${from},to=${to},action=${action},event=${selected?.id},tab=${tab},view='timeline')}"
+               th:aria-current="${timeline ? 'true' : null}">Timeline</a>
+          </nav>
+        </div>
+
+        <div class="surface empty-state" th:if="${groups.isEmpty()}">
+          <span class="history-icon" aria-hidden="true"><svg><use th:href="@{/images/icons.svg#history}"/></svg></span>
+          <h2>No activity found</h2>
+          <p>Task activity will appear here when it matches your filters.</p>
+        </div>
+        <div th:classappend="${timeline} ? ' history-timeline' : ''">
+          <th:block th:each="group : ${groups}" th:if="${!group.key.isBefore(yesterday)}">
+            <section th:replace="~{history-group :: activityGroup(${group})}"></section>
+          </th:block>
+          <details class="history-earlier surface" th:if="${earlierCount > 0}"
+                   th:open="${selected != null and selected.occurredAt.toLocalDate().isBefore(yesterday)}">
+            <summary>Earlier <span th:text="${earlierCount + (earlierCount == 1 ? ' activity' : ' activities')}">1 activity</span></summary>
+            <th:block th:each="group : ${groups}" th:if="${group.key.isBefore(yesterday)}">
+              <section th:replace="~{history-group :: activityGroup(${group})}"></section>
+            </th:block>
+          </details>
+        </div>
+      </section>
+
+      <aside class="history-panel surface" id="history-task" th:if="${selected != null}" aria-labelledby="history-task-name">
+        <header>
+          <span class="history-icon" th:classappend="${selected.action}" aria-hidden="true"><svg><use th:href="@{'/images/icons.svg#' + ${selected.action.icon}}"/></svg></span>
+          <div>
+            <h2 id="history-task-name" th:text="${selected.taskName}">Task</h2>
+            <span class="history-category"><i th:style="'--category-color:' + ${selected.categoryColor}"></i><span th:text="${selected.categoryName}">Work</span></span>
+          </div>
+          <a th:unless="${deleted}" class="btn btn-outline-secondary btn-sm" th:href="@{/tasks/{id}(id=${selected.taskId})}">Open task</a>
+        </header>
+        <nav class="history-panel-tabs" aria-label="Task information">
+          <a th:each="item : ${ {'activity','details','related'} }"
+             th:href="@{/history(query=${query},category=${selectedCategory},from=${from},to=${to},action=${action},event=${selected.id},tab=${item},view=${view})} + '#history-task'"
+             th:aria-current="${item == tab ? 'true' : null}" th:text="${#strings.capitalize(item)}">Activity</a>
+        </nav>
+        <ol class="history-task-events" th:if="${tab == 'activity'}">
+          <li th:each="item : ${taskEvents}">
+            <span class="history-icon" th:classappend="${item.action}" aria-hidden="true"><svg><use th:href="@{'/images/icons.svg#' + ${item.action.icon}}"/></svg></span>
+            <div>
+              <strong th:text="${item.summary}">Task created</strong>
+              <p th:if="${item.previousStatus != null}" th:text="${'From ' + item.previousStatus.label}"></p>
+              <p class="history-event-note" th:unless="${#strings.isEmpty(item.note)}" th:text="${item.note}"></p>
+            </div>
+            <time th:datetime="${item.occurredAt}" th:text="${#temporals.format(item.occurredAt, 'd MMM, hh:mm a')}">22 Nov, 10:24 AM</time>
+          </li>
+        </ol>
+        <dl class="history-details" th:if="${tab == 'details'}">
+          <dt>Selected activity</dt><dd th:text="${selected.summary}">Completed</dd>
+          <dt>Recorded at</dt><dd th:text="${#temporals.format(selected.occurredAt, 'd MMM yyyy, hh:mm a')}">Date</dd>
+          <th:block th:if="${selected.status != null}"><dt>Status at the time</dt><dd th:text="${selected.status.label}">Completed</dd></th:block>
+          <th:block th:unless="${#strings.isEmpty(selected.note)}"><dt>Completion note</dt><dd class="history-event-note" th:text="${selected.note}">Note</dd></th:block>
+        </dl>
+        <div class="history-related" th:if="${tab == 'related'}">
+          <h3>Tasks in <span th:text="${selected.categoryName}">Work</span></h3>
+          <p th:if="${relatedTasks.isEmpty()}">No other tasks in this category.</p>
+          <ul th:unless="${relatedTasks.isEmpty()}">
+            <li th:each="item : ${relatedTasks}"><a th:href="@{/tasks/{id}(id=${item.id})}" th:text="${item.name}">Task</a></li>
+          </ul>
+        </div>
+        <dl class="history-task-summary">
+          <div><dt><svg aria-hidden="true"><use th:href="@{/images/icons.svg#calendar}"/></svg> Created</dt><dd th:text="${created != null ? #temporals.format(created, 'd MMM yyyy, hh:mm a') : '—'}">—</dd></div>
+          <div><dt><svg aria-hidden="true"><use th:href="@{/images/icons.svg#check-circle}"/></svg> Last completed</dt><dd th:text="${completed != null ? #temporals.format(completed, 'd MMM yyyy, hh:mm a') : '—'}">—</dd></div>
+          <div><dt><svg aria-hidden="true"><use th:href="@{/images/icons.svg#clock}"/></svg> Time to completion</dt><dd th:text="${duration ?: '—'}">—</dd></div>
+        </dl>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/history.js(v='1.1.0')}"></script>
+
+
+</body>
+</html>

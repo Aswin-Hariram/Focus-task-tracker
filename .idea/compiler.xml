@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="productivity-board" />
+        <module name="productivity-app" />
+        <module name="productivity-attachment" />
+        <module name="productivity-category" />
+        <module name="productivity-task" />
+        <module name="productivity-progress" />
+        <module name="productivity-analytics" />
+        <module name="productivity-core" />
+        <module name="productivity-history" />
+        <module name="productivity-overdue" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="productivity-analytics" options="-parameters" />
+      <module name="productivity-app" options="-parameters" />
+      <module name="productivity-attachment" options="-parameters" />
+      <module name="productivity-board" options="-parameters" />
+      <module name="productivity-category" options="-parameters" />
+      <module name="productivity-core" options="-parameters" />
+      <module name="productivity-history" options="-parameters" />
+      <module name="productivity-overdue" options="-parameters" />
+      <module name="productivity-progress" options="-parameters" />
+      <module name="productivity-task" options="-parameters" />
+    </option>
+  </component>
+</project>

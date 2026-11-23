@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Focus Personal Productivity Tracker — Security Configuration
+  Externalized Regex Rules, Security Headers Filter, and Rate Limiting Quotas.
+  Parsed with XXE-hardened DocumentBuilderFactory (Anthropic Skill: testing-for-xxe-injection-vulnerabilities).
+-->
+<security-configuration>
+
+    <!-- 1. Regular Expression Rules for Input Validation & Sanitization -->
+    <regex-rules>
+        <rule id="category-color" pattern="^#[0-9A-Fa-f]{6}$" description="Hexadecimal color format (#RRGGBB)"/>
+        <rule id="task-name" pattern="^[a-zA-Z0-9\s\-_.,!?()':;#+/]{1,140}$" description="Allowed task title characters"/>
+        <rule id="reference-url" pattern="^(https?)://[a-zA-Z0-9\-_.]+(:\d+)?(/.*)?$" description="Allowed HTTP/HTTPS reference URLs"/>
+        <rule id="safe-filename" pattern="^[a-zA-Z0-9_\-. ]+$" description="Sanitized attachment filename"/>
+        <rule id="safe-redirect" pattern="^/(?!/|\\)[a-zA-Z0-9\-._~:/?#\[\]@!$&amp;'()*+,;=]*$" description="Safe relative application redirect"/>
+        <rule id="csv-formula-injection" pattern="^[=+\-@\t\r].*" description="Leading spreadsheet formula injection operators"/>
+        <rule id="backup-entry" pattern="^(focus-backup\.json|attachments/\d+\.bin)$" description="Whitelisted backup ZIP entry paths"/>
+    </regex-rules>
+
+    <!-- 2. HTTP Security Filter & Defensive Headers (Anthropic Skill: performing-security-headers-audit) -->
+    <security-filter enabled="true">
+        <headers>
+            <header name="Content-Security-Policy" value="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"/>
+            <header name="X-Frame-Options" value="DENY"/>
+            <header name="X-Content-Type-Options" value="nosniff"/>
+            <header name="Referrer-Policy" value="strict-origin-when-cross-origin"/>
+            <header name="Permissions-Policy" value="camera=(), microphone=(), geolocation=(), payment=(), usb=()"/>
+            <header name="Cross-Origin-Opener-Policy" value="same-origin"/>
+            <header name="Cross-Origin-Resource-Policy" value="same-origin"/>
+            <header name="Strict-Transport-Security" value="max-age=31536000; includeSubDomains; preload"/>
+        </headers>
+
+        <cache-control-paths>
+            <path pattern="/settings/data/backup" value="no-cache, no-store, must-revalidate, max-age=0"/>
+            <path pattern="/analytics/export" value="no-cache, no-store, must-revalidate, max-age=0"/>
+            <path pattern="/attachments/" value="no-cache, no-store, must-revalidate, max-age=0"/>
+        </cache-control-paths>
+
+        <csrf enabled="true">
+            <header-name>X-CSRF-TOKEN</header-name>
+            <param-name>_csrf</param-name>
+            <cookie-name>XSRF-TOKEN</cookie-name>
+            <safe-methods>GET,HEAD,OPTIONS,TRACE</safe-methods>
+        </csrf>
+    </security-filter>
+
+    <!-- 3. API & Web Rate Limiting (Anthropic Skill: implementing-api-rate-limiting-and-throttling) -->
+    <rate-limiting enabled="true">
+        <defaults limit="120" window-seconds="60" description="Global default per-IP rate limit"/>
+        <rules>
+            <!-- Heavy export and backup operations -->
+            <rule path="/settings/data/backup" method="GET" limit="5" window-seconds="60" description="Full workspace backup archive generation"/>
+            <rule path="/settings/data/restore" method="POST" limit="3" window-seconds="60" description="Full workspace backup restoration"/>
+            <rule path="/analytics/export" method="GET" limit="10" window-seconds="60" description="Completed tasks CSV export"/>
+
+            <!-- File attachment upload endpoints -->
+            <rule path="/attachments" method="POST" limit="20" window-seconds="60" description="File attachments upload"/>
+
+            <!-- State-changing database actions -->
+            <rule path="/tasks/save" method="POST" limit="40" window-seconds="60" description="Task creation and updates"/>
+            <rule path="/categories" method="POST" limit="40" window-seconds="60" description="Category creation and updates"/>
+            <rule path="/delete" method="POST" limit="30" window-seconds="60" description="Deletion endpoints"/>
+            <rule path="/rework" method="POST" limit="20" window-seconds="60" description="Task rework iterations"/>
+            <rule path="/status" method="POST" limit="60" window-seconds="60" description="Task status transitions"/>
+        </rules>
+    </rate-limiting>
+
+</security-configuration>

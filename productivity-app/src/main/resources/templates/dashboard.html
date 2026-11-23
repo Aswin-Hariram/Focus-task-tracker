@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body class="dashboard-page">
+<aside th:replace="~{fragments/layout :: sidebar}"></aside>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main class="page-shell">
+<div class="page-container dashboard-container">
+
+  <!-- Top Hero Row: Greeting Banner + Mini Calendar Week Strip -->
+  <section class="dashboard-hero" aria-label="Welcome and current week">
+    <div class="greeting-banner">
+      <h1 class="greeting-artwork">
+        <img class="landscape-svg greeting-artwork-light" th:src="@{/images/dashboard-banner.svg}"
+             width="2028" height="566" alt="Good Morning, Aswin!">
+        <img class="landscape-svg greeting-artwork-dark" th:src="@{/images/dashboard-banner-dark.svg}"
+             width="2104" height="613" alt="Good Morning, Aswin!">
+      </h1>
+      <p class="visually-hidden">A current view of planned work, progress, and deadlines.</p>
+    </div>
+
+    <!-- Mini Calendar / Week Strip Widget -->
+    <div class="week-strip-card surface">
+      <div class="week-strip-header">
+        <a class="week-nav-btn" th:href="@{/dashboard(date=${prevWeekDate})}" aria-label="Previous week" title="Previous week">
+          <svg class="btn-icon"><use th:href="@{/images/icons.svg#chevron-left}"/></svg>
+        </a>
+        <div class="d-inline-flex align-items-center gap-2">
+          <span class="week-month-label" th:text="${weekMonthYear}">November 2026</span>
+          <a th:if="${!isToday}" th:href="@{/dashboard}" class="badge bg-light text-dark border text-decoration-none px-2 py-1" style="font-size:0.75rem;" title="Go to today">Today</a>
+        </div>
+        <a class="week-nav-btn" th:href="@{/dashboard(date=${nextWeekDate})}" aria-label="Next week" title="Next week">
+          <svg class="btn-icon"><use th:href="@{/images/icons.svg#chevron-right}"/></svg>
+        </a>
+      </div>
+      <div class="week-strip-days week-strip-weekdays" aria-hidden="true">
+        <span th:each="day : ${calendarWeeks[0]}" class="week-day-name" th:text="${day.dayName}">Mon</span>
+      </div>
+      <div class="week-strip-calendar" id="dashboardCalendarWeeks" tabindex="0" role="region" aria-label="Scrollable month calendar">
+        <div class="week-strip-days" th:each="week, weekStatus : ${calendarWeeks}"
+             th:classappend="${weekStatus.first} ? '' : 'week-strip-following'"
+             th:data-opening-week="${week[0].date.equals(calendarOpeningWeek) ? 'true' : null}">
+          <div class="week-day-col" th:each="day : ${week}">
+            <a th:if="${day.date.month == selectedDate.month}" th:href="@{/dashboard(date=${day.date})}"
+               class="week-day-number"
+               th:attr="aria-label=${#temporals.format(day.date, 'EEEE, d MMMM yyyy')},aria-current=${day.isSelected ? 'date' : (day.isToday ? 'date' : null)},data-date=${day.date}"
+               th:classappend="${(day.isToday ? ' is-today' : '') + (day.isSelected ? ' is-selected' : '')}"
+               th:text="${day.dayNumber}">16</a>
+            <span th:if="${day.date.month == selectedDate.month}" class="week-day-dot" th:classappend="${day.hasTasks or day.isToday} ? ' has-tasks' : ''"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Second Row: 4 Metric Stat Cards -->
+  <section class="dashboard-metrics-grid summary-metrics" aria-label="Task summary">
+    <!-- Tasks today -->
+    <article class="metric-card metric-card-blue surface">
+      <div class="metric-card-top">
+        <div class="metric-icon-box icon-box-blue">
+          <svg><use th:href="@{/images/icons.svg#clipboard}"/></svg>
+        </div>
+      </div>
+      <div class="metric-card-body">
+        <span class="metric-card-label" th:text="${isToday ? 'Tasks today' : 'Tasks for ' + #temporals.format(selectedDate, 'd MMM')}">Tasks today</span>
+        <div class="metric-card-value" th:text="${todayCount}">6</div>
+        <div class="metric-card-note" th:text="${isToday ? 'Planned for the current date' : 'Planned for ' + #temporals.format(selectedDate, 'EEEE, d MMMM')}">Planned for the current date</div>
+      </div>
+    </article>
+
+    <!-- In progress -->
+    <article class="metric-card metric-card-amber surface">
+      <div class="metric-card-top">
+        <div class="metric-icon-box icon-box-amber">
+          <svg><use th:href="@{/images/icons.svg#hourglass}"/></svg>
+        </div>
+      </div>
+      <div class="metric-card-body">
+        <span class="metric-card-label">In progress</span>
+        <div class="metric-card-value" th:text="${summary.inProgress}">2</div>
+        <div class="metric-card-note">Active across all dates</div>
+      </div>
+    </article>
+
+    <!-- Completed -->
+    <article class="metric-card metric-card-green surface">
+      <div class="metric-card-top">
+        <div class="metric-icon-box icon-box-green">
+          <svg><use th:href="@{/images/icons.svg#check-circle}"/></svg>
+        </div>
+      </div>
+      <div class="metric-card-body">
+        <span class="metric-card-label">Completed</span>
+        <div class="metric-card-value" th:text="${summary.completed}">2</div>
+        <div class="metric-card-note">All completed work</div>
+      </div>
+    </article>
+
+    <!-- Overdue -->
+    <article class="metric-card metric-card-red surface">
+      <div class="metric-card-top">
+        <div class="metric-icon-box icon-box-red">
+          <svg><use th:href="@{/images/icons.svg#warning}"/></svg>
+        </div>
+      </div>
+      <div class="metric-card-body">
+        <span class="metric-card-label">Overdue</span>
+        <div class="metric-card-value" th:text="${summary.overdue}">0</div>
+        <div class="metric-card-note">Needs a date or status update</div>
+      </div>
+    </article>
+  </section>
+
+  <!-- Third Row: Main Two-Column Grid (Today's Work + Stack) -->
+  <div class="dashboard-grid">
+    <!-- Left Column: Today's Work -->
+    <section class="todays-work-card surface">
+      <div class="todays-work-header">
+        <div class="d-flex align-items-center gap-3">
+          <div class="card-title-icon icon-box-blue">
+            <svg><use th:href="@{/images/icons.svg#clipboard}"/></svg>
+          </div>
+          <div>
+            <h2 class="card-heading" th:text="${isToday ? 'Today’s work' : 'Work for ' + #temporals.format(selectedDate, 'd MMM')}">Today’s work</h2>
+            <p class="card-subheading" th:text="${isToday ? 'Tasks currently planned for today.' : 'Tasks planned for ' + #temporals.format(selectedDate, 'EEEE, d MMMM yyyy') + '.'}">Tasks currently planned for today.</p>
+          </div>
+        </div>
+        <a th:href="@{/board(date=${selectedDate})}" class="btn btn-outline-secondary btn-sm">
+          <span>View board</span>
+          <svg class="btn-icon"><use th:href="@{/images/icons.svg#arrow}"/></svg>
+        </a>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="work-filter-tabs" role="tablist">
+        <button type="button" class="tab-pill active" data-filter="all" role="tab" aria-selected="true">
+          <svg class="tab-icon"><use th:href="@{/images/icons.svg#clipboard}"/></svg>
+          <span>All</span>
+          <span class="tab-count" th:text="|(${todayCount})|">(6)</span>
+        </button>
+        <button type="button" class="tab-pill" data-filter="inbox" role="tab" aria-selected="false">
+          <svg class="tab-icon"><use th:href="@{/images/icons.svg#inbox}"/></svg>
+          <span>Inbox</span>
+          <span class="tab-count" th:text="|(${inboxTasks.size()})|">(2)</span>
+        </button>
+        <button type="button" class="tab-pill" data-filter="now" role="tab" aria-selected="false">
+          <svg class="tab-icon"><use th:href="@{/images/icons.svg#clock}"/></svg>
+          <span>Now</span>
+          <span class="tab-count" th:text="|(${inProgressTasks.size()})|">(1)</span>
+        </button>
+        <button type="button" class="tab-pill" data-filter="tomorrow" role="tab" aria-selected="false">
+          <svg class="tab-icon"><use th:href="@{/images/icons.svg#calendar}"/></svg>
+          <span th:text="${isToday ? 'Tomorrow' : 'Next day'}">Tomorrow</span>
+          <span class="tab-count" th:text="|(${tomorrowCount})|">(1)</span>
+        </button>
+        <button type="button" class="tab-pill" data-filter="nextweek" role="tab" aria-selected="false">
+          <svg class="tab-icon"><use th:href="@{/images/icons.svg#calendar}"/></svg>
+          <span>Next week</span>
+          <span class="tab-count" th:text="|(${nextWeekCount})|">(2)</span>
+        </button>
+        <a th:href="@{/board(date=${selectedDate})}" class="tab-pill tab-link" role="tab" title="Custom date on board">
+          <svg class="tab-icon"><use th:href="@{/images/icons.svg#calendar}"/></svg>
+          <span>Custom</span>
+        </a>
+      </div>
+
+      <!-- Task List Container -->
+      <div class="todays-task-list" id="dashboardTaskList">
+        <!-- Today's Tasks -->
+        <div th:each="task : ${todayTasks}"
+             class="task-row"
+             th:classappend="${task.status.name() == 'COMPLETED'} ? ' is-completed' : ''"
+             th:attr="data-task-id=${task.id},data-status=${task.status.name()},data-bucket='today'">
+          <button type="button" class="task-check-btn"
+                  th:classappend="${task.status.name() == 'COMPLETED'} ? ' checked' : ''"
+                  th:attr="data-task-id=${task.id},data-status=${task.status.name()}"
+                  aria-label="Toggle task completion">
+            <svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+
+          <div class="task-info">
+            <a class="task-row-title" th:href="@{/tasks/{id}(id=${task.id})}" th:text="${task.name}">Task name</a>
+            <div class="category-meta" th:if="${task.category != null}">
+              <span class="category-dot" th:style="'--category-color:' + ${task.category.color}"></span>
+              <span th:text="${task.category.name}">Category</span>
+            </div>
+          </div>
+
+          <div class="task-deadline-badge">
+            <th:block th:if="${task.deadline != null}">
+              <svg class="meta-icon"><use th:href="@{/images/icons.svg#calendar}"/></svg>
+              <span th:text="${'Due ' + #temporals.format(task.deadline, 'd MMM')}">Due 24 Nov</span>
+            </th:block>
+            <th:block th:if="${task.deadline == null}">
+              <span class="text-muted">-</span>
+            </th:block>
+          </div>
+
+          <div class="task-pill-col">
+            <th:block th:if="${task.status.name() == 'IN_PROGRESS'}">
+              <span class="status-pill status-IN_PROGRESS">In progress</span>
+            </th:block>
+            <th:block th:if="${task.status.name() == 'COMPLETED'}">
+              <span class="status-pill status-COMPLETED">Completed</span>
+            </th:block>
+            <th:block th:if="${task.status.name() == 'YET_TO_START'}">
+              <span th:class="'priority-pill priority-' + ${task.priority}" th:text="${#strings.capitalize(#strings.toLowerCase(task.priority))}">Medium</span>
+            </th:block>
+          </div>
+
+          <a th:href="@{/tasks/{id}(id=${task.id})}" class="task-arrow-link" aria-label="View task details">
+            <svg class="btn-icon"><use th:href="@{/images/icons.svg#chevron-right}"/></svg>
+          </a>
+        </div>
+
+        <!-- Tomorrow's Tasks (hidden until Tomorrow tab is clicked) -->
+        <div th:each="task : ${tomorrowTasks}"
+             class="task-row is-tomorrow-task"
+             style="display: none;"
+             th:attr="data-task-id=${task.id},data-status=${task.status.name()},data-bucket='tomorrow'">
+          <button type="button" class="task-check-btn"
+                  th:classappend="${task.status.name() == 'COMPLETED'} ? ' checked' : ''"
+                  th:attr="data-task-id=${task.id},data-status=${task.status.name()}"
+                  aria-label="Toggle task completion">
+            <svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+          <div class="task-info">
+            <a class="task-row-title" th:href="@{/tasks/{id}(id=${task.id})}" th:text="${task.name}">Task name</a>
+            <div class="category-meta" th:if="${task.category != null}">
+              <span class="category-dot" th:style="'--category-color:' + ${task.category.color}"></span>
+              <span th:text="${task.category.name}">Category</span>
+            </div>
+          </div>
+          <div class="task-deadline-badge">
+            <th:block th:if="${task.deadline != null}">
+              <svg class="meta-icon"><use th:href="@{/images/icons.svg#calendar}"/></svg>
+              <span th:text="${'Due ' + #temporals.format(task.deadline, 'd MMM')}">Due 24 Nov</span>
+            </th:block>
+            <th:block th:if="${task.deadline == null}">
+              <span class="text-muted">-</span>
+            </th:block>
+          </div>
+          <div class="task-pill-col">
+            <span th:class="'priority-pill priority-' + ${task.priority}" th:text="${#strings.capitalize(#strings.toLowerCase(task.priority))}">Medium</span>
+          </div>
+          <a th:href="@{/tasks/{id}(id=${task.id})}" class="task-arrow-link" aria-label="View task details">
+            <svg class="btn-icon"><use th:href="@{/images/icons.svg#chevron-right}"/></svg>
+          </a>
+        </div>
+
+        <!-- Next Week's Tasks (hidden until Next week tab is clicked) -->
+        <div th:each="task : ${nextWeekTasks}"
+             class="task-row is-nextweek-task"
+             style="display: none;"
+             th:attr="data-task-id=${task.id},data-status=${task.status.name()},data-bucket='nextweek'">
+          <button type="button" class="task-check-btn"
+                  th:classappend="${task.status.name() == 'COMPLETED'} ? ' checked' : ''"
+                  th:attr="data-task-id=${task.id},data-status=${task.status.name()}"
+                  aria-label="Toggle task completion">
+            <svg class="check-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+          <div class="task-info">
+            <a class="task-row-title" th:href="@{/tasks/{id}(id=${task.id})}" th:text="${task.name}">Task name</a>
+            <div class="category-meta" th:if="${task.category != null}">
+              <span class="category-dot" th:style="'--category-color:' + ${task.category.color}"></span>
+              <span th:text="${task.category.name}">Category</span>
+            </div>
+          </div>
+          <div class="task-deadline-badge">
+            <th:block th:if="${task.deadline != null}">
+              <svg class="meta-icon"><use th:href="@{/images/icons.svg#calendar}"/></svg>
+              <span th:text="${'Due ' + #temporals.format(task.deadline, 'd MMM')}">Due 24 Nov</span>
+            </th:block>
+            <th:block th:if="${task.deadline == null}">
+              <span class="text-muted">-</span>
+            </th:block>
+          </div>
+          <div class="task-pill-col">
+            <span th:class="'priority-pill priority-' + ${task.priority}" th:text="${#strings.capitalize(#strings.toLowerCase(task.priority))}">Medium</span>
+          </div>
+          <a th:href="@{/tasks/{id}(id=${task.id})}" class="task-arrow-link" aria-label="View task details">
+            <svg class="btn-icon"><use th:href="@{/images/icons.svg#chevron-right}"/></svg>
+          </a>
+        </div>
+
+        <!-- Empty State for Today's Work -->
+        <div class="empty-state" id="dashboardEmptyState" th:style="${todayTasks.isEmpty()} ? '' : 'display: none;'">
+          <svg><use th:href="@{/images/icons.svg#check-square}"/></svg>
+          <h2>No tasks in this view</h2>
+          <p>Create a task or move planned work here when you are ready.</p>
+          <a class="btn btn-primary btn-sm" th:href="@{/tasks/new}">Create task</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Completion Rate + Overdue Stack -->
+    <div class="dashboard-stack">
+      <!-- Completion Rate Card -->
+      <section class="surface completion-card">
+        <div class="completion-card-header">
+          <div class="d-flex align-items-center gap-3">
+            <div class="card-title-icon icon-box-green">
+              <svg><use th:href="@{/images/icons.svg#target}"/></svg>
+            </div>
+            <div>
+              <h2 class="card-heading">Completion rate</h2>
+              <p class="card-subheading">Completed share of all tasks.</p>
+            </div>
+          </div>
+          <strong class="completion-rate-value" th:text="${summary.completionRate + '%'}">29%</strong>
+        </div>
+        <div class="completion-card-body">
+          <div class="progress-track" role="progressbar" aria-label="Completion rate"
+               aria-valuemin="0" aria-valuemax="100" th:attr="aria-valuenow=${summary.completionRate}">
+            <span class="progress-fill-green" th:style="|width: ${summary.completionRate}%;|"></span>
+          </div>
+          <img class="completion-trend-box" th:src="@{/images/analytics-growth.svg}" alt="">
+        </div>
+      </section>
+
+      <!-- Overdue Card -->
+      <section class="surface overdue-card">
+        <div class="overdue-card-header">
+          <div class="d-flex align-items-center gap-3">
+            <div class="card-title-icon icon-box-red">
+              <svg><use th:href="@{/images/icons.svg#warning}"/></svg>
+            </div>
+            <div>
+              <h2 class="card-heading">Overdue</h2>
+              <p class="card-subheading">Oldest deadlines first.</p>
+            </div>
+          </div>
+          <a th:href="@{/overdue}" class="btn btn-outline-secondary btn-sm">View all</a>
+        </div>
+        <div class="overdue-card-body">
+          <!-- Empty State Graphic when overdue is empty -->
+          <div th:if="${overduePreview.isEmpty()}" class="overdue-empty-container">
+            <img class="overdue-empty-illustration" th:src="@{/images/empty-overdue.svg}" alt="">
+            <div class="overdue-empty-text">No tasks are overdue.</div>
+          </div>
+
+          <!-- List of overdue tasks if any -->
+          <div th:if="${!overduePreview.isEmpty()}" class="overdue-list">
+            <div class="attachment-row" th:each="item : ${overduePreview}">
+              <div class="attachment-name">
+                <strong th:text="${item.task.name}">Task</strong>
+                <small class="text-danger" th:text="${item.daysOverdue + ' days overdue'}">1 day overdue</small>
+              </div>
+              <a th:href="@{/tasks/{id}(id=${item.task.id})}" aria-label="View task">
+                <svg class="btn-icon"><use th:href="@{/images/icons.svg#chevron-right}"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+</div>
+</main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

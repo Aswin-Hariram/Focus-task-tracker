@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<aside th:replace="~{fragments/layout :: sidebar}"></aside>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main class="page-shell">
+  <div class="page-container task-form-page">
+    <nav class="task-editor-nav" aria-label="Breadcrumb">
+      <a class="btn btn-outline-secondary btn-sm" th:href="@{/tasks}" aria-label="Back to tasks">
+        <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#chevron-left}"/></svg>
+      </a>
+      <a th:href="@{/tasks}">Tasks</a>
+      <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#chevron-right}"/></svg>
+      <span aria-current="page" th:text="${pageTitle}">Create task</span>
+    </nav>
+    <form class="surface task-editor" th:classappend="${taskForm.id == null} ? 'task-editor-create'" method="post" enctype="multipart/form-data" th:action="@{/tasks/save(_csrf=${_csrf})}" th:object="${taskForm}" th:attr="data-confirm=${taskForm.id != null ? 'Save modifications to this task?' : null}">
+      <input type="hidden" name="_csrf" th:value="${_csrf}">
+      <div class="task-editor-hero-frame">
+        <header class="task-editor-hero">
+          <span th:if="${taskForm.id != null}" class="task-editor-mode">
+            <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#edit}"/></svg>
+            <span>Editing task</span>
+          </span>
+          <div class="task-editor-intro">
+            <h1 th:text="${pageTitle}">Create task</h1>
+            <p th:text="${taskForm.id != null ? 'Update the task details, schedule, and supporting materials.' : 'Define the task details, set priorities and deadlines, and add supporting files or links.'}"></p>
+          </div>
+        </header>
+      </div>
+      <div class="surface-body">
+        <input type="hidden" th:field="*{id}">
+        <div class="field-error-summary" th:if="${#fields.hasGlobalErrors()}" role="alert">
+          <div th:each="error : ${#fields.globalErrors()}" th:text="${error}">Error</div>
+        </div>
+        <div class="task-editor-panels">
+          <section class="task-editor-details" aria-label="Task details">
+            <h2 class="task-editor-detail-heading">
+              <span class="task-editor-panel-icon" aria-hidden="true">
+                <svg class="btn-icon"><use th:href="@{/images/icons.svg#clipboard}"/></svg>
+              </span>
+              Task details
+            </h2>
+            <div class="form-grid">
+              <div class="form-span-2">
+                <label class="form-label" for="name">Task name <span class="text-danger" aria-hidden="true">*</span></label>
+                <input class="form-control" th:classappend="${#fields.hasErrors('name')} ? ' is-invalid'" id="name" th:field="*{name}" maxlength="140" placeholder="Enter a clear, short task name" required>
+                <div class="invalid-feedback" th:errors="*{name}">Error</div>
+              </div>
+              <div class="form-span-2">
+                <label class="form-label" for="description">Description <span class="muted">(optional)</span></label>
+                <textarea class="form-control" id="description" th:field="*{description}" th:classappend="${#fields.hasErrors('description')} ? ' is-invalid'" maxlength="3000" aria-describedby="task-description-count" rows="3" placeholder="Add context, acceptance criteria, or instructions"></textarea>
+                <div class="invalid-feedback" th:errors="*{description}">Error</div>
+                <div id="task-description-count" class="form-text text-end" th:text="|${taskForm.description == null ? 0 : #strings.length(taskForm.description)} / 3000|">0 / 3000</div>
+              </div>
+              <div>
+                <label class="form-label" for="categoryId">Category <span class="text-danger" aria-hidden="true">*</span></label>
+                <div class="task-editor-select">
+                  <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#tag}"/></svg>
+                  <select class="form-select" id="categoryId" th:field="*{categoryId}" required th:classappend="${#fields.hasErrors('categoryId')} ? ' is-invalid'">
+                    <option value="">Choose category</option>
+                    <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}">Category</option>
+                  </select>
+                </div>
+                <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}">Error</div>
+              </div>
+              <div>
+                <label class="form-label" for="priority">Priority <span class="text-danger" aria-hidden="true">*</span></label>
+                <div class="task-editor-select">
+                  <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#chart}"/></svg>
+                  <select class="form-select" id="priority" th:field="*{priority}" required>
+                    <option th:each="item : ${priorities}" th:value="${item}" th:text="${item.label}">Priority</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="form-label" for="plannedDate">Planned date <span class="text-danger" aria-hidden="true">*</span></label>
+                <input class="form-control" id="plannedDate" type="date" th:field="*{plannedDate}" required th:classappend="${#fields.hasErrors('plannedDate')} ? ' is-invalid'">
+                <div class="invalid-feedback" th:errors="*{plannedDate}">Error</div>
+              </div>
+              <div>
+                <label class="form-label" for="deadline">Deadline <span class="muted">(optional)</span></label>
+                <input class="form-control" id="deadline" type="date" th:field="*{deadline}" th:attr="min=*{plannedDate}">
+                <div class="form-text">Must be on or after the planned date.</div>
+              </div>
+              <div>
+                <label class="form-label" for="status">Status <span class="text-danger" aria-hidden="true">*</span></label>
+                <div class="task-editor-select">
+                  <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#check-circle}"/></svg>
+                  <select class="form-select" id="status" th:field="*{status}" required>
+                    <option th:each="item : ${statuses}" th:value="${item}" th:text="${item.label}">Status</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="form-label" for="completionNote">Completion note <span class="muted">(optional)</span></label>
+                <input class="form-control" id="completionNote" th:field="*{completionNote}" maxlength="2000" placeholder="What was completed or decided">
+              </div>
+
+            </div>
+          </section>
+          <section id="task-supporting-materials" class="task-editor-materials" aria-labelledby="task-materials-heading">
+            <div class="task-editor-materials-intro">
+              <span class="task-editor-materials-icon" aria-hidden="true">
+                <svg class="btn-icon"><use th:href="@{/images/icons.svg#paperclip}"/></svg>
+              </span>
+              <div>
+                <h2 id="task-materials-heading">Supporting Materials</h2>
+                <p>Attach relevant files or add reference links.</p>
+              </div>
+            </div>
+            <div class="task-editor-material-switch" role="group" aria-label="Supporting material type" hidden>
+              <button type="button" data-material-tab="files" aria-controls="task-editor-file-panel" aria-pressed="true">
+                <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#upload-cloud}"/></svg>Files
+              </button>
+              <button type="button" data-material-tab="links" aria-controls="task-editor-link-panel" aria-pressed="false">
+                <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#link}"/></svg>Links
+              </button>
+            </div>
+            <section id="task-editor-file-panel" class="task-editor-file-section" aria-labelledby="task-editor-files-heading">
+              <h3 id="task-editor-files-heading" class="visually-hidden">Files</h3>
+              <button type="button" class="file-dropzone task-editor-dropzone" id="taskEditorDropzone" data-file-drop="true" hidden>
+                <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#upload-cloud}"/></svg>
+                <span>Drag and drop files here, or <strong>click to browse</strong></span>
+                <small>PDF, PNG, JPG, XLSX, DOCX, TXT, and other file types</small>
+              </button>
+              <div th:replace="~{fragments/layout :: supportingFiles('attachmentFile', 'attachments')}"></div>
+              <ul class="task-editor-saved-items" th:unless="${savedFiles.isEmpty()}">
+                <li th:each="file : ${savedFiles}">
+                  <span class="task-editor-item-icon task-editor-file-type" aria-hidden="true"
+                        th:data-filename="${file.originalName}" th:data-content-type="${file.contentType}">
+                    <svg th:replace="~{fragments/layout :: supportingFileIcon}"></svg>
+                  </span>
+                  <div class="task-editor-item-info">
+                    <strong th:text="${file.originalName}">File</strong>
+                    <small>
+                      <span th:text="${file.sizeBytes >= 1048576 ? #numbers.formatDecimal(file.sizeBytes / 1048576.0, 1, 1) + ' MB' : #numbers.formatDecimal(file.sizeBytes / 1024.0, 1, 1) + ' KB'}">Size</span>
+                      <span th:if="${file.createdAt != null}"> · Uploaded <time th:datetime="${file.createdAt}" th:text="${#temporals.format(file.createdAt, 'd MMM yyyy')}"></time></span>
+                    </small>
+                  </div>
+                  <a class="task-editor-item-action" th:if="${file.previewContentType != null}"
+                     th:href="@{/tasks/{taskId}/attachments/{id}(taskId=${taskForm.id},id=${file.id},preview=true)}"
+                     target="_blank" rel="noopener noreferrer" th:aria-label="|Preview ${file.originalName} in a new tab|" title="Preview file">
+                    <svg class="btn-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+                  </a>
+                  <a class="task-editor-item-action" th:href="@{/tasks/{taskId}/attachments/{id}(taskId=${taskForm.id},id=${file.id})}"
+                     th:aria-label="|Download ${file.originalName}|" title="Download file">
+                    <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#download}"/></svg>
+                  </a>
+                  <label class="task-editor-item-action task-editor-item-remove" title="Remove file when saving">
+                    <input class="visually-hidden" type="checkbox" name="removeFileIds" th:value="${file.id}" th:checked="${removeFileIds.contains(file.id)}"
+                           th:aria-label="|Remove ${file.originalName} when saving|">
+                    <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#trash}"/></svg>
+                  </label>
+                  <small class="task-editor-removal-note">Removed on save</small>
+                </li>
+              </ul>
+            </section>
+            <section id="task-editor-link-panel" class="task-editor-link-section" aria-labelledby="task-editor-links-heading">
+              <h3 id="task-editor-links-heading">Reference links</h3>
+              <div id="taskEditorLinkRows">
+                <div class="link-row task-editor-link-row" th:each="link : ${taskLinkInputs}">
+                  <div class="input-group" data-draft-url>
+                    <input class="form-control" type="url" name="linkUrls" maxlength="1000" aria-label="Reference link URL"
+                           placeholder="https://example.com" th:value="${link.url}">
+                    <a th:replace="~{fragments/layout :: draftLinkOpen}"></a>
+                  </div>
+                  <input class="form-control" type="text" name="linkLabels" maxlength="120" aria-label="Link label (optional)"
+                         placeholder="Label (optional)" th:value="${link.label}">
+                  <button class="btn btn-outline-danger remove-link-btn" type="button" aria-label="Remove link">
+                    <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#trash}"/></svg>
+                  </button>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="taskEditorAddLink" aria-controls="taskEditorLinkRows">
+                <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#plus}"/></svg>Add reference link
+              </button>
+            </section>
+            <hr class="task-editor-materials-divider" id="taskEditorLinkDivider" th:hidden="${savedLinks.isEmpty()}">
+            <ul class="task-editor-saved-items task-editor-saved-links" id="taskEditorLinkCards" aria-label="Reference links" th:hidden="${savedLinks.isEmpty()}">
+              <li th:each="link : ${savedLinks}">
+                <span class="task-editor-item-icon task-editor-link-icon" aria-hidden="true"><svg class="btn-icon"><use th:href="@{/images/icons.svg#link}"/></svg></span>
+                <div class="task-editor-item-info">
+                  <strong th:text="${link.label}">Link</strong>
+                  <small th:text="${link.url}">URL</small>
+                </div>
+                <a class="task-editor-item-action" th:href="${link.url}" target="_blank" rel="noopener noreferrer"
+                   th:aria-label="|Open ${link.label} in a new tab|" title="Open link">
+                  <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#external-link}"/></svg>
+                </a>
+                <label class="task-editor-item-action task-editor-item-remove" title="Remove link when saving">
+                  <input class="visually-hidden" type="checkbox" name="removeLinkIds" th:value="${link.id}" th:checked="${removeLinkIds.contains(link.id)}"
+                         th:aria-label="|Remove ${link.label} when saving|">
+                  <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#trash}"/></svg>
+                </label>
+                <small class="task-editor-removal-note">Removed on save</small>
+              </li>
+            </ul>
+            <template id="taskEditorDraftLinkCard">
+              <li data-draft-link>
+                <span class="task-editor-item-icon task-editor-link-icon" aria-hidden="true"><svg class="btn-icon"><use th:href="@{/images/icons.svg#link}"/></svg></span>
+                <div class="task-editor-item-info">
+                  <strong></strong>
+                  <small></small>
+                </div>
+                <a class="task-editor-item-action" target="_blank" rel="noopener noreferrer" title="Open link">
+                  <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#external-link}"/></svg>
+                </a>
+                <button type="button" class="task-editor-item-action task-editor-item-remove" title="Remove link">
+                  <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#trash}"/></svg>
+                </button>
+              </li>
+            </template>
+          </section>
+        </div>
+
+        <div class="task-editor-footer">
+          <span class="muted"><svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#info}"/></svg> Fields marked with <span class="text-danger">*</span> are required.</span>
+          <div class="form-actions">
+            <a class="btn btn-outline-secondary" th:href="${taskForm.id == null ? '/tasks' : '/tasks/' + taskForm.id}">Cancel</a>
+            <button class="btn btn-primary" type="submit">
+              <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#check}"/></svg>
+              <span th:text="${taskForm.id == null ? 'Create task' : 'Save changes'}">Save</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

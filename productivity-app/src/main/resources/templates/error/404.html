@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle != null ? pageTitle : 'Page not found'})}"></head>
+<body>
+<aside th:replace="~{fragments/layout :: sidebar}"></aside>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+
+<main class="page-shell">
+  <div class="page-container" style="max-width: 48rem; margin: 3rem auto;">
+    <section class="surface text-center p-5 shadow-sm rounded-3">
+      <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle mb-4" style="width: 5rem; height: 5rem;">
+        <svg style="width: 2.5rem; height: 2.5rem; color: #64748B;"><use th:href="@{/images/icons.svg#search}"/></svg>
+      </div>
+
+      <div class="badge bg-light text-secondary border px-3 py-1 mb-3 fs-6 font-monospace">404 · Not Found</div>
+
+      <h1 class="page-title mb-2 fs-2">Page or Record Not Found</h1>
+      
+      <p class="text-secondary mx-auto mb-4" style="max-width: 32rem; font-size: 0.95rem; line-height: 1.6;"
+         th:text="${message != null and !message.isBlank() ? message : 'The page you requested could not be found. It may have been moved, renamed, or deleted.'}">
+        The page you requested could not be found. It may have been moved, renamed, or deleted.
+      </p>
+
+      <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+        <a class="btn btn-primary px-4" th:href="@{/dashboard}">
+          <svg class="btn-icon me-1"><use th:href="@{/images/icons.svg#grid}"/></svg>Go to Dashboard
+        </a>
+        <a class="btn btn-outline-secondary px-4" th:href="@{/tasks}">
+          <svg class="btn-icon me-1"><use th:href="@{/images/icons.svg#check-square}"/></svg>View All Tasks
+        </a>
+        <a class="btn btn-outline-secondary px-4" th:href="@{/board}">
+          <svg class="btn-icon me-1"><use th:href="@{/images/icons.svg#board}"/></svg>Daily Board
+        </a>
+      </div>
+
+      <div class="border-top pt-4 mt-2">
+        <p class="text-muted small mb-2">Looking for something specific?</p>
+        <div class="d-flex justify-content-center gap-3 small text-secondary">
+          <a class="text-decoration-none" th:href="@{/history}">Completed History</a>
+          <span>·</span>
+          <a class="text-decoration-none" th:href="@{/categories}">Categories</a>
+          <span>·</span>
+          <a class="text-decoration-none" th:href="@{/analytics}">Analytics</a>
+          <span>·</span>
+          <a class="text-decoration-none" th:href="@{/settings}">Settings</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

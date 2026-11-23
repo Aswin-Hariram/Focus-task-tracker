@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<aside th:replace="~{fragments/layout :: sidebar}"></aside>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main class="page-shell">
+  <div class="page-container task-detail" th:attr="data-storage-materials=@{/tasks/{id}/storage-materials(id=${task.id})},
+                 data-completed-at=${task.completedAt?.toString()},data-iteration=${task.iteration}">
+    <div class="task-detail-toolbar">
+      <nav aria-label="Breadcrumb" class="task-detail-breadcrumb">
+        <a class="icon-button" th:href="@{/tasks}" aria-label="Back to tasks"><svg aria-hidden="true"><use th:href="@{/images/icons.svg#chevron-left}"/></svg></a>
+        <a th:href="@{/tasks}">Tasks</a>
+        <svg aria-hidden="true"><use th:href="@{/images/icons.svg#chevron-right}"/></svg>
+        <span aria-current="page">View task</span>
+      </nav>
+      <button class="btn btn-primary btn-sm task-detail-toolbar-add" type="button" data-bs-toggle="modal"
+              data-bs-target="#progressComposer" aria-haspopup="dialog">
+        <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#plus}"/></svg>Add progress update
+      </button>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-stack">
+        <header class="task-detail-hero">
+          <div class="task-detail-hero-content">
+            <div class="task-detail-hero-badges">
+              <span th:class="'status-pill status-' + ${task.status}">
+                <svg aria-hidden="true"><use th:href="@{'/images/icons.svg#' + ${task.status.name() == 'COMPLETED' ? 'check-circle' : (task.status.name() == 'IN_PROGRESS' ? 'hourglass' : (task.status.name() == 'BLOCKED' ? 'slash' : 'clock'))}}"/></svg>
+                <span th:text="${task.status.label}">Status</span>
+              </span>
+              <span th:class="'priority-pill priority-' + ${task.priority}" th:text="${task.priority.label}">Priority</span>
+              <span class="task-detail-iteration" th:text="${'Iteration ' + task.iteration + (task.iteration > 1 ? ' (Rework)' : '')}">Iteration 1</span>
+            </div>
+            <h1 th:text="${task.name}">Task</h1>
+            <div class="task-detail-hero-meta">
+              <span class="meta-chip">
+                <i class="category-dot" th:style="'--category-color:' + ${task.category.color}"></i>
+                <span th:text="${task.category.name}">Category</span>
+              </span>
+              <span class="meta-chip">
+                <svg aria-hidden="true"><use th:href="@{/images/icons.svg#calendar}"/></svg>
+                <span>Planned for [[${#temporals.format(task.plannedDate, 'd MMM yyyy')}]]</span>
+              </span>
+              <span class="meta-chip" th:if="${task.deadline != null}" th:classappend="${task.overdue} ? 'is-overdue' : ''">
+                <svg aria-hidden="true"><use th:href="@{/images/icons.svg#calendar}"/></svg>
+                <span>Due [[${#temporals.format(task.deadline, 'd MMM yyyy')}]]</span>
+              </span>
+              <span class="meta-chip" th:if="${task.deadline == null}">
+                <svg aria-hidden="true"><use th:href="@{/images/icons.svg#calendar}"/></svg>
+                <span>No deadline</span>
+              </span>
+            </div>
+          </div>
+        </header>
+        <section class="surface task-detail-action-panel" aria-labelledby="taskActionsTitle">
+          <div class="task-detail-action-heading">
+            <span class="task-detail-icon" aria-hidden="true"><svg><use th:href="@{/images/icons.svg#bolt}"/></svg></span>
+            <h2 class="section-heading" id="taskActionsTitle">Task actions</h2>
+          </div>
+          <div class="task-detail-actions">
+            <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#reworkModal">
+              <svg class="btn-icon"><use th:href="@{/images/icons.svg#history}"/></svg>Rework task
+            </button>
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/tasks/{id}/edit(id=${task.id})}">
+              <svg class="btn-icon"><use th:href="@{/images/icons.svg#edit}"/></svg>Edit
+            </a>
+            
+            <form th:action="@{/tasks/{id}/delete(id=${task.id})}" method="post" data-confirm="Permanently delete this task and all its files? This action cannot be undone.">
+              <input type="hidden" name="_csrf" th:value="${_csrf}">
+              <button class="btn btn-outline-danger btn-sm" type="submit">
+                <svg class="btn-icon"><use th:href="@{/images/icons.svg#trash}"/></svg>Delete
+              </button>
+            </form>
+            <div class="task-detail-secondary-actions">
+              <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#shareTaskModal">
+                <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#link}"/></svg>Share
+              </button>
+
+              <a class="btn btn-outline-secondary btn-sm" th:href="@{/tasks/{id}/export(id=${task.id})}">
+                <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#download}"/></svg>Export CSV
+              </a>
+              <a class="btn btn-outline-secondary btn-sm" th:href="@{/tasks/{id}/export.xlsx(id=${task.id})}">
+                <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#download}"/></svg>Export Excel
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- Task Timer Section -->
+        <section class="surface task-detail-timer-card" aria-labelledby="taskTimerTitle"
+                 id="taskDetailTimerSection"
+                 th:data-task-id="${task.id}"
+                 th:data-timer-can-start="${task.status.name() == 'IN_PROGRESS'}"
+                 th:data-timer-status="${task.timerStatus.name()}"
+                 th:data-timer-started="${task.timerStartedAtMillis}"
+                 th:data-timer-accumulated="${task.timerAccumulatedSeconds}"
+                 th:data-total-seconds="${task.totalTimeSpentSeconds}">
+          <div class="surface-header timer-card-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <span class="task-detail-icon timer-icon-wrapper" aria-hidden="true">
+                <svg><use th:href="@{/images/icons.svg#clock}"/></svg>
+              </span>
+              <div>
+                <h2 class="section-heading mb-0" id="taskTimerTitle">Task Timer</h2>
+                <p class="section-caption mb-0">Track active time spent working on this task.</p>
+              </div>
+            </div>
+            <div class="timer-status-pill-wrap" role="status">
+              <span id="timerStatusPillRunning" class="timer-status-pill timer-status-running" th:style="${task.timerStatus.name() == 'RUNNING' ? '' : 'display:none;'}">
+                <span class="timer-pulse-indicator"></span> Running
+              </span>
+              <span id="timerStatusPillPaused" class="timer-status-pill timer-status-paused" th:style="${task.timerStatus.name() == 'PAUSED' ? '' : 'display:none;'}">
+                <span class="timer-state-dot" aria-hidden="true"></span> Paused
+              </span>
+              <span id="timerStatusPillStopped" class="timer-status-pill timer-status-stopped" th:style="${task.timerStatus.name() == 'STOPPED' ? '' : 'display:none;'}">
+                <span class="timer-state-dot" aria-hidden="true"></span> Stopped
+              </span>
+            </div>
+          </div>
+          <div class="surface-body timer-card-body">
+            <div class="timer-content-row">
+              <dl class="timer-metrics">
+                <div class="timer-metric">
+                  <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#clock}"/></svg>
+                  <dt>Current Session</dt>
+                  <dd id="timerClockDigits" th:text="${timerCurrentDisplay}">00:00:00</dd>
+                </div>
+                <div class="timer-metric">
+                  <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#layers}"/></svg>
+                  <dt>Total Time Spent</dt>
+                  <dd id="timerTotalValue" th:text="${timerTotalDisplay}">00:00:00</dd>
+                </div>
+                <div class="timer-metric">
+                  <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 4 13 8-13 8Z"/></svg>
+                  <dt>Sessions</dt>
+                  <dd id="timerSessionsCount" th:text="${timeLogs.size()}">0</dd>
+                </div>
+              </dl>
+
+              <div class="timer-controls-row">
+                <form class="timer-action-form d-inline-block" th:action="@{/tasks/{id}/timer/start(id=${task.id})}" method="post" id="formTimerStart">
+                  <input type="hidden" name="_csrf" th:value="${_csrf}">
+                  <button type="submit" class="btn btn-timer btn-timer-start" id="btnTimerStart"
+                          th:disabled="${task.status.name() != 'IN_PROGRESS' or task.timerStatus.name() == 'RUNNING'}"
+                          th:title="${task.status.name() != 'IN_PROGRESS' ? 'Move the task to In progress to start the timer' : (task.timerStatus.name() == 'PAUSED' ? 'Resume timer' : 'Start timer')}">
+                    <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <polygon points="6 3 20 12 6 21 6 3"/>
+                    </svg>
+                    <span id="btnTimerStartLabel" class="btn-label" th:text="${task.timerStatus.name() == 'PAUSED' ? 'Resume' : 'Start'}">Start</span>
+                  </button>
+                </form>
+
+                <form class="timer-action-form d-inline-block" th:action="@{/tasks/{id}/timer/pause(id=${task.id})}" method="post" id="formTimerPause">
+                  <input type="hidden" name="_csrf" th:value="${_csrf}">
+                  <button type="submit" class="btn btn-timer btn-timer-pause" id="btnTimerPause"
+                          th:disabled="${task.timerStatus.name() != 'RUNNING'}"
+                          title="Pause timer">
+                    <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <rect x="6" y="4" width="4" height="16" rx="1"/>
+                      <rect x="14" y="4" width="4" height="16" rx="1"/>
+                    </svg>
+                    <span class="btn-label">Pause</span>
+                  </button>
+                </form>
+
+                <form class="timer-action-form d-inline-block" th:action="@{/tasks/{id}/timer/stop(id=${task.id})}" method="post" id="formTimerStop">
+                  <input type="hidden" name="_csrf" th:value="${_csrf}">
+                  <button type="submit" class="btn btn-timer btn-timer-stop" id="btnTimerStop"
+                          th:disabled="${task.timerStatus.name() == 'STOPPED'}"
+                          title="Stop timer and log time">
+                    <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <rect x="5" y="5" width="14" height="14" rx="2"/>
+                    </svg>
+                    <span class="btn-label">Stop</span>
+                  </button>
+                </form>
+              </div>
+
+            </div>
+
+            <div id="timerHistoryContainer" class="timer-history-section mt-3 pt-3 border-top" th:if="${timeLogs != null and !timeLogs.isEmpty()}">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="timer-history-title small fw-semibold text-muted">Recorded sessions</span>
+              </div>
+              <div class="timer-history-list" id="timerHistoryList">
+                <div class="timer-history-item" th:each="log : ${timeLogs}">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="timer-history-date small">
+                      <svg class="btn-icon me-1 text-muted" style="width:.85rem;height:.85rem;"><use th:href="@{/images/icons.svg#calendar}"/></svg>
+                      <span th:text="${#temporals.format(log.startedAt, 'd MMM yyyy, HH:mm')} + ' - ' + ${#temporals.format(log.endedAt, log.startedAt.toLocalDate().equals(log.endedAt.toLocalDate()) ? 'HH:mm' : 'd MMM yyyy, HH:mm')}">Date</span>
+                    </span>
+                    <span class="timer-history-duration badge bg-primary-subtle text-primary fw-medium" th:text="${log.formattedDuration}">0s</span>
+                  </div>
+                  <p class="timer-history-note text-muted small mb-0 mt-1" th:if="${log.note != null and !log.note.isBlank()}" th:text="${log.note}"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="surface" th:if="${!#strings.isEmpty(task.description) or !#strings.isEmpty(task.completionNote)}">
+          <div class="surface-header">
+            <span class="task-detail-icon" aria-hidden="true"><svg><use th:href="@{/images/icons.svg#file-text}"/></svg></span>
+            <h2 class="section-heading">Notes</h2>
+          </div>
+          <div class="surface-body">
+            <div th:if="${!#strings.isEmpty(task.description)}" class="mb-2">
+              <p class="timeline-copy mb-0" th:text="${task.description}">Description</p>
+            </div>
+            <div th:if="${!#strings.isEmpty(task.completionNote)}" th:classappend="${!#strings.isEmpty(task.description)} ? 'pt-2 border-top' : ''">
+              <strong class="text-success small d-block mb-1">Completion note:</strong>
+              <p class="timeline-copy mb-0" th:text="${task.completionNote}">Completion note</p>
+            </div>
+          </div>
+        </section>
+
+        <div class="task-detail-controls">
+          <!-- Attachments -->
+          <section class="surface">
+            <div class="surface-header">
+              <span class="task-detail-icon" aria-hidden="true"><svg><use th:href="@{/images/icons.svg#paperclip}"/></svg></span>
+              <div>
+                <h2 class="section-heading">Task attachments</h2>
+                <p class="section-caption">All file formats are supported.</p>
+              </div>
+
+            </div>
+            <div class="surface-body">
+              <div class="attachment-row" th:each="file : ${files}" th:attr="data-storage-file=${file.id}">
+                <!-- File Type Badge -->
+                <span class="task-editor-file-type" aria-hidden="true"
+                      th:data-filename="${file.originalName}" th:data-content-type="${file.contentType}">
+                  <svg th:replace="~{fragments/layout :: supportingFileIcon}"></svg>
+                </span>
+
+                <div class="attachment-name">
+                  <strong class="attachment-filename" th:text="${file.originalName}">File</strong>
+                  <small class="attachment-filesize" th:text="${file.sizeBytes >= 1048576 ? #numbers.formatDecimal(file.sizeBytes / 1048576.0, 1, 1) + ' MB' : #numbers.formatDecimal(file.sizeBytes / 1024.0, 1, 1) + ' KB'}">Size</small>
+                </div>
+                <div class="inline-actions">
+                  <a th:if="${file.previewContentType != null}" class="icon-button"
+                     th:href="@{/tasks/{taskId}/attachments/{id}(taskId=${task.id},id=${file.id},preview=true)}"
+                     th:aria-label="|Preview ${file.originalName} in a new tab|" title="Preview file" target="_blank" rel="noopener noreferrer">
+                    <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#eye}"/></svg>
+                  </a>
+                  <a class="icon-button download-action" th:href="@{/tasks/{taskId}/attachments/{id}(taskId=${task.id},id=${file.id})}" aria-label="Download attachment" title="Download attachment">
+                    <svg><use th:href="@{/images/icons.svg#download}"/></svg>
+                  </a>
+                  <form method="post" th:action="@{/tasks/{taskId}/attachments/{id}/delete(taskId=${task.id},id=${file.id})}" data-confirm="Permanently delete this attachment? This action cannot be undone.">
+                    <input type="hidden" name="_csrf" th:value="${_csrf}">
+                    <button class="icon-button delete-action" type="submit" aria-label="Delete attachment" title="Delete attachment">
+                      <svg><use th:href="@{/images/icons.svg#trash}"/></svg>
+                    </button>
+                  </form>
+                </div>
+              </div>
+              <p class="muted mb-3" th:if="${files.isEmpty()}" style="font-size:.84rem">No files directly attached to this task.</p>
+              <form id="taskAttachmentUploadForm" class="task-attachment-upload-form" method="post" enctype="multipart/form-data" th:action="@{/tasks/{id}/attachments(id=${task.id})}">
+                <input type="hidden" name="_csrf" th:value="${_csrf}">
+                <input type="file" id="taskAttachmentInput" name="files" multiple class="d-none">
+                <button type="button" class="file-dropzone task-attachment-dropzone" id="taskAttachmentDropzone" data-file-drop="true">
+                  <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#upload-cloud}"/></svg>
+                  <span>Drag and drop files here, or <strong>click to browse</strong></span>
+                  <small>PDF, PNG, JPG, XLSX, DOCX, TXT, and other file types</small>
+                </button>
+              </form>
+            </div>
+          </section>
+
+          <!-- Reference Links -->
+          <section class="surface">
+            <div class="surface-header">
+              <span class="task-detail-icon" aria-hidden="true"><svg><use th:href="@{/images/icons.svg#link}"/></svg></span>
+              <h2 class="section-heading">Reference links</h2>
+            </div>
+            <div class="surface-body">
+              <div class="attachment-row" th:each="link : ${links}" th:attr="data-storage-link=${link.id}">
+                <span class="task-detail-icon" aria-hidden="true"><svg><use th:href="@{/images/icons.svg#link}"/></svg></span>
+                <a class="attachment-name task-detail-reference" th:href="${link.url}" target="_blank" rel="noopener noreferrer"
+                   th:aria-label="|Open ${link.label} in a new tab|" title="Open link in a new tab">
+                  <span th:text="${link.label}">Link</span>
+                  <span class="visually-hidden">(opens in a new tab)</span>
+                  <svg aria-hidden="true"><use th:href="@{/images/icons.svg#external-link}"/></svg>
+                </a>
+                <form method="post" th:action="@{/tasks/{taskId}/links/{id}/delete(taskId=${task.id},id=${link.id})}" data-confirm="Permanently delete this reference link? This action cannot be undone.">
+                  <input type="hidden" name="_csrf" th:value="${_csrf}">
+                  <button class="icon-button" type="submit" aria-label="Delete reference link">
+                    <svg><use th:href="@{/images/icons.svg#trash}"/></svg>
+                  </button>
+                </form>
+              </div>
+              <p class="muted mb-0" th:if="${links.isEmpty()}" style="font-size:.84rem">No reference links.</p>
+              <div class="d-flex justify-content-end mt-3">
+                <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#taskLinkComposer" aria-controls="taskLinkComposer" aria-expanded="false">
+                  <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#plus}"/></svg>Add link
+                </button>
+              </div>
+              <div class="collapse" id="taskLinkComposer">
+                <form method="post" th:action="@{/tasks/{id}/links(id=${task.id})}" class="mt-3">
+                  <input type="hidden" name="_csrf" th:value="${_csrf}">
+                  <label class="form-label" for="linkLabel">Label</label>
+                  <input class="form-control" id="linkLabel" name="label" maxlength="120" placeholder="e.g. Design Spec, Figma, Jira">
+                  <label class="form-label mt-2" for="linkUrl">URL</label>
+                  <div class="input-group" data-draft-url>
+                    <input class="form-control" id="linkUrl" name="url" type="url" aria-label="Reference link URL" required placeholder="https://example.com">
+                    <a th:replace="~{fragments/layout :: draftLinkOpen}"></a>
+                  </div>
+                  <div class="d-flex justify-content-end mt-3">
+                    <button class="btn btn-primary btn-sm" type="submit">Save link</button>
+                  </div>
+
+                </form>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Progress Timeline -->
+      <section class="surface task-detail-timeline-panel">
+        <div class="surface-header task-detail-timeline-header">
+          <span class="task-detail-icon" aria-hidden="true"><svg><use th:href="@{/images/icons.svg#message-square}"/></svg></span>
+          <div>
+            <h2 class="section-heading">Progress timeline</h2>
+            <p class="section-caption">Task milestones and progress from the current iteration.</p>
+          </div>
+          <span class="task-detail-iteration task-detail-timeline-iteration">Iteration [[${task.iteration}]]</span>
+        </div>
+        <div class="surface-body">
+          <ol class="task-detail-timeline" th:unless="${timeline.isEmpty()}">
+            <li th:each="entry : ${timeline}" th:classappend="${entry.tone}" data-timeline-card
+                th:data-timeline-status="${entry.status?.name()}"
+                th:data-progress-edit-url="@{${entry.editPath}(_csrf=${_csrf})}"
+                th:data-progress-delete-url="${entry.update != null} ? @{/tasks/{taskId}/progress/{progressId}/delete(taskId=${task.id},progressId=${entry.update.id},_csrf=${_csrf})} : ''"
+                th:data-progress-id="${entry.update?.id}"
+                th:data-progress-milestone="${entry.tone != 'PROGRESS'}"
+                th:data-progress-recorded-at="${#temporals.format(entry.time, 'yyyy-MM-dd''T''HH:mm')}"
+                th:data-progress-description="${entry.update?.description}" th:data-progress-reminder="${entry.update?.reminder}">
+              <span class="task-detail-icon" aria-hidden="true"><svg><use th:href="@{'/images/icons.svg#' + ${entry.icon}}"/></svg></span>
+              <div class="task-detail-entry">
+                <button class="timeline-card-title" type="button" data-timeline-open aria-haspopup="dialog"
+                        th:text="${entry.title}">Activity</button>
+                <p th:unless="${#strings.isEmpty(entry.description)}" class="timeline-copy" th:text="${entry.description}">Details</p>
+              </div>
+              <time class="timeline-time" th:datetime="${entry.time}">
+                <svg aria-hidden="true"><use th:href="@{/images/icons.svg#calendar}"/></svg>
+                <span th:text="${#temporals.format(entry.time, 'd MMM yyyy, HH:mm')}">Date</span>
+              </time>
+              <details class="task-detail-entry-actions" th:if="${entry.update != null}" th:with="update=${entry.update}">
+                <summary class="timeline-more" aria-label="Manage update" title="Manage update">⋯</summary>
+                <div class="task-detail-entry-actions-content mt-2">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-muted fw-semibold">Update options</span>
+                    <form method="post" th:action="@{/tasks/{taskId}/progress/{progressId}/delete(taskId=${task.id},progressId=${update.id})}" th:data-confirm="${entry.tone == 'PROGRESS'} ? 'Permanently delete this progress update, its attachments, and links?' : 'Remove the note, attachments, and links? The task milestone stays on the timeline.'">
+                      <input type="hidden" name="_csrf" th:value="${_csrf}">
+                      <button class="btn btn-outline-danger btn-sm py-1 px-2" style="font-size: .78rem;" type="submit">
+                        <svg class="btn-icon" style="width:.85rem;height:.85rem;"><use th:href="@{/images/icons.svg#trash}"/></svg><span th:text="${entry.tone == 'PROGRESS'} ? 'Delete update' : 'Remove note'">Delete update</span>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </details>
+              <div class="task-detail-entry-extras"
+                   th:if="${entry.update != null and (!#strings.isEmpty(entry.update.reminder) or !progressFiles[entry.update.id].isEmpty() or !progressLinks[entry.update.id].isEmpty())}"
+                   th:with="update=${entry.update},files=${progressFiles[entry.update.id]},links=${progressLinks[entry.update.id]}">
+                <p class="timeline-copy muted mb-2" th:if="${!#strings.isEmpty(update.reminder)}">
+                  <strong>Remember:</strong> <span th:text="${update.reminder}">Reminder</span>
+                </p>
+                <div th:replace="~{fragments/layout :: timelineMaterials(${task.id}, ${files}, ${links})}"></div>
+              </div>
+            </li>
+          </ol>
+          <p class="muted mb-0" th:if="${timeline.isEmpty()}">No timeline entries yet.</p>
+
+          <div class="mt-4 pt-3 border-top" th:if="${!pastHistory.isEmpty()}">
+            <h3 class="section-heading mb-3">Previous iterations history</h3>
+            <div class="accordion" id="pastIterationsAccordion">
+              <div class="accordion-item border rounded mb-2 overflow-hidden" th:each="past : ${pastHistory}">
+                <h2 class="accordion-header" th:id="${'heading-' + past.iterationNumber}">
+                  <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" th:data-bs-target="${'#collapse-' + past.iterationNumber}" aria-expanded="false" th:aria-controls="${'collapse-' + past.iterationNumber}">
+                    <span class="fw-semibold me-2">Iteration [[${past.iterationNumber}]]</span>
+                    <span class="muted small" th:if="${past.completedAt != null}">— Completed [[${#temporals.format(past.completedAt, 'd MMM yyyy, HH:mm')}]]</span>
+                  </button>
+                </h2>
+                <div th:id="${'collapse-' + past.iterationNumber}" class="accordion-collapse collapse" th:aria-labelledby="${'heading-' + past.iterationNumber}">
+                  <div class="accordion-body pt-3">
+                    <div class="mb-3 p-2 bg-light rounded" th:if="${!#strings.isEmpty(past.completionNote)}">
+                      <strong class="text-success small d-block mb-1">Completion note:</strong>
+                      <p class="mb-0 small" th:text="${past.completionNote}">Note</p>
+                    </div>
+                    <ol class="timeline mb-0" th:if="${!past.updates.isEmpty()}">
+                      <li class="timeline-item" th:each="u : ${past.updates}" data-timeline-card
+                          th:data-progress-edit-url="@{/tasks/{taskId}/progress/{progressId}/edit(taskId=${task.id},progressId=${u.id},_csrf=${_csrf})}"
+                          th:data-progress-delete-url="@{/tasks/{taskId}/progress/{progressId}/delete(taskId=${task.id},progressId=${u.id},_csrf=${_csrf})}"
+                          th:data-progress-id="${u.id}"
+                          th:data-progress-recorded-at="${#temporals.format(u.recordedAt, 'yyyy-MM-dd''T''HH:mm')}"
+                          th:data-progress-description="${u.description}" th:data-progress-reminder="${u.reminder}">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <button class="timeline-card-title" type="button" data-timeline-open aria-haspopup="dialog">Progress update</button>
+                          <form method="post" th:action="@{/tasks/{taskId}/progress/{progressId}/delete(taskId=${task.id},progressId=${u.id})}" data-confirm="Permanently delete this progress update, its attachments, and links?">
+                            <input type="hidden" name="_csrf" th:value="${_csrf}">
+                            <button class="btn btn-link text-danger p-0 border-0 text-decoration-none" style="font-size: .8rem;" type="submit" title="Delete progress update" aria-label="Delete progress update">
+                              <svg class="btn-icon" style="width:.85rem;height:.85rem;"><use th:href="@{/images/icons.svg#trash}"/></svg>
+                            </button>
+                          </form>
+                        </div>
+                        <time class="timeline-time" th:text="${#temporals.format(u.recordedAt, 'd MMM yyyy, HH:mm')}">Date</time>
+                        <p class="timeline-copy" th:text="${u.description}">Description</p>
+                        <p class="timeline-copy muted mb-2" th:if="${!#strings.isEmpty(u.reminder)}">
+                          <strong>Remember:</strong> <span th:text="${u.reminder}">Reminder</span>
+                        </p>
+                        <div th:replace="~{fragments/layout :: timelineMaterials(${task.id}, ${progressFiles[u.id]}, ${progressLinks[u.id]})}"></div>
+                      </li>
+                    </ol>
+                    <p class="muted small mb-0" th:if="${past.updates.isEmpty()}">No progress updates recorded for this iteration.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="modal fade progress-dialog" id="progressComposer" data-progress-tone="info" tabindex="-1" aria-labelledby="progressComposerTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <form class="modal-content" method="post" enctype="multipart/form-data" th:action="@{/tasks/{id}/progress(id=${task.id},_csrf=${_csrf})}" th:object="${progressForm}">
+        <div class="modal-header progress-dialog-header">
+          <span class="progress-dialog-hero-icon progress-icon-badge" aria-hidden="true">
+            <svg><use th:href="@{/images/icons.svg#message-square}"/></svg>
+          </span>
+          <div class="progress-dialog-heading">
+            <h2 class="modal-title" id="progressComposerTitle">Log progress update</h2>
+            <p>Add details about the latest progress.</p>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="_csrf" th:value="${_csrf}">
+          <input type="hidden" name="keepCurrentStatus" value="true">
+          <div th:replace="~{fragments/layout :: progressStatusChoices('progressStatus')}"></div>
+          <label class="form-label" for="progressDescription">Log progress <span class="muted">(optional)</span></label>
+          <textarea class="form-control" id="progressDescription" th:field="*{description}" maxlength="3000" rows="3" placeholder="Describe work completed, milestones achieved, or blockers solved"></textarea>
+          <div class="progress-dialog-count" data-count-for="progressDescription">0 / 3000</div>
+          <label class="form-label mt-2" for="reminder">Things to remember <span class="muted">(optional)</span></label>
+          <input class="form-control" id="reminder" th:field="*{reminder}" maxlength="1500" placeholder="Add notes, next steps or key points…">
+          <div class="progress-dialog-count" data-count-for="reminder">0 / 1500</div>
+
+          <div class="mb-3 mt-2">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label small fw-semibold mb-0" for="progressComposerRecordedAt">Progress date &amp; time <span class="muted fw-normal">(optional)</span></label>
+              <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none small text-muted" onclick="document.getElementById('progressComposerRecordedAt').value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)">Set to now</button>
+            </div>
+            <input class="form-control form-control-sm" type="datetime-local" id="progressComposerRecordedAt" name="recordedAt" th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd''T''HH:mm')}">
+            <div class="form-text small muted">Defaults to current time. Choose another date to backdate or adjust.</div>
+          </div>
+
+          <div class="mt-3"><div th:replace="~{fragments/layout :: supportingFiles('progressComposerFiles', 'files')}"></div></div>
+
+          <div class="d-flex justify-content-between align-items-center mt-3 mb-1">
+            <div th:replace="~{fragments/layout :: progressLinksHeading}"></div>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="detailProgressAddLinkBtn">+ Add link</button>
+          </div>
+          <div id="detailProgressLinksContainer">
+            <div class="row g-2 mx-0 mb-2 link-row progress-dialog-material-row progress-dialog-link-row">
+              <div class="col-sm-7">
+                <div class="input-group" data-draft-url>
+                  <input class="form-control" type="url" aria-label="Reference link URL" name="linkUrls" placeholder="https://github.com/... or document URL">
+                  <a th:replace="~{fragments/layout :: draftLinkOpen}"></a>
+                </div>
+              </div>
+              <div class="col-sm-5 d-flex gap-1">
+                <input class="form-control" type="text" name="linkLabels" aria-label="Reference link label" placeholder="Label (e.g. PR, Spec)">
+                <button type="button" class="btn btn-outline-danger btn-sm px-2 remove-link-btn" title="Remove link" style="display:none;">&times;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" type="submit"><svg class="btn-icon me-1" aria-hidden="true"><use th:href="@{/images/icons.svg#save}"/></svg>Save progress update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal fade" id="timelineEntryModal" tabindex="-1" aria-labelledby="timelineEntryTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="timelineEntryTitle" class="modal-title fs-5"></h2>
+          <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="timelineEntryBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="shareTaskModal" tabindex="-1" aria-labelledby="shareTaskTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="shareTaskTitle">Share task</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label" for="taskShareUrl">Task link</label>
+          <div class="input-group">
+            <input class="form-control" id="taskShareUrl" type="text" readonly th:value="@{/tasks/{id}(id=${task.id})}">
+            <button class="btn btn-primary" id="copyTaskShareUrl" type="button">Copy link</button>
+          </div>
+          <p class="form-text mb-0" id="taskShareFeedback" aria-live="polite">Anyone opening this link needs access to this tracker.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rework Task Modal -->
+  <div class="modal fade" id="reworkModal" tabindex="-1" aria-labelledby="reworkModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form method="post" th:action="@{/tasks/{id}/rework(id=${task.id})}" data-confirm="Advance this task to a new rework iteration? Current progress notes will move to iteration history.">
+          <input type="hidden" name="_csrf" th:value="${_csrf}">
+          <div class="modal-header">
+            <h5 class="modal-title" id="reworkModalLabel">Start task rework</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info py-2 mb-3" style="font-size: .88rem;">
+              Starting rework advances this task to <strong>Iteration [[${task.iteration + 1}]]</strong> with a fresh progress log. Earlier milestones remain on the timeline.
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="reworkPlannedDate">Planned rework date</label>
+              <input class="form-control" id="reworkPlannedDate" name="plannedDate" type="date" th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="reworkDeadline">New deadline <span class="muted">(optional)</span></label>
+              <input class="form-control" id="reworkDeadline" name="deadline" type="date">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm">Start Rework (Iteration [[${task.iteration + 1}]])</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/task-detail.js(v='1.0.7')}"></script>
+<script th:src="@{/js/focus-storage.js}"></script>
+</body>
+</html>

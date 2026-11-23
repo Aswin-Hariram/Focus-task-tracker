@@ -1,0 +1,19 @@
+  <section class="history-group" th:fragment="activityGroup(group)">
+    <header>
+      <h2 th:text="${(group.key == historyToday ? 'Today · ' : (group.key == yesterday ? 'Yesterday · ' : '')) + #temporals.format(group.key, 'd MMM yyyy')}">Today</h2>
+      <span th:text="${group.value.size() + (group.value.size() == 1 ? ' activity' : ' activities')}">1 activity</span>
+    </header>
+    <ul class="history-rows surface">
+      <li th:each="item : ${group.value}">
+        <a class="history-row" th:classappend="${item.action}" th:data-select-event="${item.id}"
+           th:href="@{/history(query=${query},category=${selectedCategory},from=${from},to=${to},action=${action},event=${item.id},view=${view})}"
+           th:aria-current="${item.id == selected?.id ? 'true' : null}">
+          <span class="history-icon" aria-hidden="true"><svg><use th:href="@{'/images/icons.svg#' + ${item.action.icon}}"/></svg></span>
+          <span class="history-row-title"><strong th:text="${item.taskName}">Task</strong><small th:text="${item.summary}">Task created</small></span>
+          <span class="history-badge" th:text="${item.label}">Created</span>
+          <span class="history-category"><i th:style="'--category-color:' + ${item.categoryColor}"></i><span th:text="${item.categoryName}">Work</span></span>
+          <time th:datetime="${item.occurredAt}" th:text="${#temporals.format(item.occurredAt, 'hh:mm a')}">10:24 AM</time>
+        </a>
+      </li>
+    </ul>
+  </section>

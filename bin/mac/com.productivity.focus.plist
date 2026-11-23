@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.productivity.focus</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>{{JAVA_PATH}}</string>
+        <string>-Dfocus.packaged=true</string>
+        <string>-Dserver.port={{SERVER_PORT}}</string>
+        <string>-DEMBEDDED_POSTGRES_PORT={{EMBEDDED_POSTGRES_PORT}}</string>
+        <string>-jar</string>
+        <string>{{JAR_PATH}}</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>{{WORKING_DIR}}</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+        <key>Crashed</key>
+        <true/>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>{{LOG_DIR}}/focus.launchd.log</string>
+    <key>StandardErrorPath</key>
+    <string>{{LOG_DIR}}/focus.launchd.error.log</string>
+</dict>
+</plist>

@@ -1,0 +1,159 @@
+.dashboard-container .surface,
+.dashboard-container .greeting-banner { border-radius: 1.15rem; }
+
+.dashboard-container { container-type: inline-size; }
+
+.dashboard-container .dashboard-hero {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+}
+
+@container (min-width: 42rem) {
+  .dashboard-container .dashboard-hero {
+    grid-template-columns: minmax(0, 3fr) minmax(18rem, 2fr);
+  }
+
+  .dashboard-container .week-strip-card {
+    align-self: stretch;
+  }
+}
+
+.dashboard-container .greeting-banner {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.greeting-artwork { margin: 0; }
+
+.dashboard-container .greeting-artwork .landscape-svg {
+  position: static;
+  height: auto;
+}
+
+.dashboard-container .greeting-artwork .greeting-artwork-dark,
+:root[data-theme="dark"] .dashboard-container .greeting-artwork .greeting-artwork-light {
+  display: none;
+}
+
+:root[data-theme="dark"] .dashboard-container .greeting-artwork .greeting-artwork-dark {
+  display: block;
+}
+
+:root[data-theme="dark"] .dashboard-container .greeting-banner {
+  background: transparent;
+}
+
+:root[data-theme="dark"] .dashboard-container .greeting-artwork .landscape-svg {
+  filter: none;
+}
+
+:root[data-theme="dark"] .dashboard-container .greeting-banner::after {
+  content: none;
+}
+
+.dashboard-container .week-strip-card {
+  justify-content: center;
+  padding: 1.15rem 1.35rem;
+}
+.dashboard-container .week-strip-days { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.dashboard-container .week-strip-weekdays { overflow-y: hidden; scrollbar-width: thin; scrollbar-gutter: stable; }
+.dashboard-container .week-strip-calendar {
+  --calendar-week-height: 2.8rem;
+  position: relative;
+  max-height: calc(2 * var(--calendar-week-height));
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+  scroll-snap-type: y mandatory;
+}
+.dashboard-container .week-strip-calendar > .week-strip-days {
+  min-height: var(--calendar-week-height);
+  scroll-snap-align: start;
+}
+.dashboard-container .week-nav-btn[aria-disabled="true"] { opacity: .45; cursor: default; }
+
+.dashboard-container .week-month-label { font-size: 1rem; }
+.dashboard-container .week-day-number { max-width: 100%; border-radius: .7rem; font-size: .95rem; cursor: pointer; }
+.dashboard-container .week-day-number.is-today { background: #087d51; color: #ffffff !important; box-shadow: none; }
+.dashboard-container .week-day-number.is-selected:not(.is-today) {
+  background: var(--color-primary, #2563eb);
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+}
+.dashboard-container .week-day-number.is-selected.is-today {
+  outline: 2px solid var(--color-text, #111827);
+  outline-offset: 2px;
+}
+:root[data-theme="dark"] .dashboard-container .week-day-number.is-selected.is-today {
+  outline-color: #f8fafc;
+}
+.dashboard-container .week-day-dot { width: .35rem; height: .35rem; }
+
+.dashboard-container .card-title-icon { border-radius: 50%; width: 3rem; height: 3rem; }
+.dashboard-container .card-title-icon svg { width: 1.65rem; height: 1.65rem; }
+
+.dashboard-container .dashboard-stack { gap: 1rem; }
+.dashboard-container .completion-card {
+  flex: 0 0 auto;
+  background: linear-gradient(150deg, var(--color-surface), color-mix(in srgb, #20c785 7%, var(--color-surface)));
+}
+
+.dashboard-container .todays-work-header,
+.dashboard-container .completion-card-header,
+.dashboard-container .overdue-card-header { border-bottom: 0; }
+.dashboard-container .card-heading { font-size: 1.15rem; }
+.dashboard-container .completion-card-body {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  padding: 0 1.25rem .8rem;
+}
+
+.dashboard-container .completion-trend-box { width: 6.25rem; height: auto; margin: 0; }
+.dashboard-container .progress-track {
+  flex: 1;
+  height: .75rem;
+  background: color-mix(in srgb, #278581 20%, var(--color-surface));
+}
+.dashboard-container .progress-fill-green { background: linear-gradient(90deg, #0abf78, #078351); }
+.dashboard-container .overdue-card-body { padding: 0 1.25rem 1rem; }
+.dashboard-container .overdue-empty-container { padding: .25rem 0 .65rem; }
+.dashboard-container .overdue-empty-illustration { width: 11.75rem; margin-bottom: .3rem; }
+
+.dashboard-container .work-filter-tabs { flex-wrap: wrap; }
+.dashboard-container .todays-task-list { margin: 0 1.25rem .9rem; }
+.dashboard-container .todays-task-list .task-row {
+  grid-template-columns: auto minmax(0, 1fr) 6.75rem 6rem auto;
+  gap: .65rem;
+  padding: .65rem .4rem;
+}
+.dashboard-container .todays-task-list .task-row > .task-info { display: block; }
+.dashboard-container .todays-task-list .task-row > .task-deadline-badge { display: flex; }
+.dashboard-container .task-row-title { white-space: normal; overflow-wrap: anywhere; }
+
+:root[data-theme="dark"] .dashboard-container .week-strip-card { background: var(--color-surface); }
+:root[data-theme="dark"] .dashboard-container .week-nav-btn { color: var(--color-text); border-color: var(--color-border); }
+:root[data-theme="dark"] .dashboard-container .progress-track { background: #222225; }
+:root[data-theme="dark"] .dashboard-container .progress-fill-green { background: linear-gradient(90deg, #15ed94, #08bc61); }
+@media (max-width: 1220px) {
+  .dashboard-container .dashboard-grid { grid-template-columns: 1fr; }
+  .dashboard-container .dashboard-stack { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .dashboard-container .dashboard-stack { grid-template-columns: 1fr; }
+  .dashboard-container .week-strip-card { padding-inline: .8rem; }
+  .dashboard-container .todays-task-list .task-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: .55rem;
+    row-gap: .3rem;
+  }
+  .dashboard-container .task-deadline-badge,
+  .dashboard-container .task-pill-col { grid-column: 2; justify-self: start; }
+  .dashboard-container .task-arrow-link { grid-column: 3; grid-row: 1; }
+  .dashboard-container .todays-work-header,
+  .dashboard-container .overdue-card-header { flex-wrap: wrap; gap: .65rem; }
+}

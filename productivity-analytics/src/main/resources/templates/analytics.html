@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body class="analytics-page">
+<aside th:replace="~{fragments/layout :: sidebar}"></aside>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main class="page-shell">
+  <div class="page-container analytics-layout">
+    <!-- Header with Title & Period Pill Controls -->
+    <header class="analytics-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+      <div>
+        <h1 class="analytics-title">Analytics</h1>
+        <p class="analytics-subtitle">Understand your productivity, track progress, and find opportunities to improve.</p>
+      </div>
+
+      <div class="analytics-controls d-flex align-items-center gap-2">
+        <nav class="analytics-periods surface" aria-label="Analytics period">
+          <a th:href="@{/analytics(period='week')}" class="period-pill" th:classappend="${period == 'week'} ? 'active' : ''" th:attr="aria-current=${period == 'week' ? 'page' : null}">This Week</a>
+          <a th:href="@{/analytics(period='month')}" class="period-pill" th:classappend="${period == 'month'} ? 'active' : ''" th:attr="aria-current=${period == 'month' ? 'page' : null}">This Month</a>
+          <a th:href="@{/analytics(period='quarter')}" class="period-pill" th:classappend="${period == 'quarter'} ? 'active' : ''" th:attr="aria-current=${period == 'quarter' ? 'page' : null}">This Quarter</a>
+          <a th:href="@{/analytics(period='year')}" class="period-pill" th:classappend="${period == 'year'} ? 'active' : ''" th:attr="aria-current=${period == 'year' ? 'page' : null}">This Year</a>
+          <details class="analytics-custom" th:open="${!rangeError.isEmpty()}">
+            <summary class="period-pill custom-pill" th:classappend="${period == 'custom' ? 'active is-selected' : ''}">
+              <svg class="pill-cal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <span>Custom</span>
+            </summary>
+            <form method="get" th:action="@{/analytics}" class="surface shadow">
+              <input type="hidden" name="period" value="custom">
+              <label for="analytics-from">Start date</label>
+              <input id="analytics-from" class="form-control form-control-sm mb-2" type="date" name="from" th:value="${from}" required>
+              <label for="analytics-to">End date</label>
+              <input id="analytics-to" class="form-control form-control-sm mb-2" type="date" name="to" th:value="${to}" required>
+              <p class="danger-text small mb-2" role="alert" th:if="${!rangeError.isEmpty()}" th:text="${rangeError}"></p>
+              <button type="submit" class="btn btn-primary btn-sm w-100">Apply dates</button>
+            </form>
+          </details>
+        </nav>
+
+        <a class="btn btn-outline-secondary btn-sm export-btn" th:href="@{/analytics/export(from=${from},to=${to})}"
+           title="Export completed tasks as CSV" aria-label="Export completed tasks as CSV">
+          <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#download}"/></svg>
+        </a>
+        <a class="btn btn-outline-secondary btn-sm export-btn" th:href="@{/analytics/export.xlsx(from=${from},to=${to})}">
+          <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#download}"/></svg>Export Excel
+        </a>
+      </div>
+    </header>
+
+    <!-- 4 Pastel Metric Stat Cards (Matching Dashboard Theme) -->
+    <section class="dashboard-metrics-grid summary-metrics mb-4" aria-label="Analytics summary">
+      <!-- Card 1: Total Tasks -->
+      <article class="metric-card metric-card-blue surface">
+        <div class="metric-card-top">
+          <div class="metric-icon-box icon-box-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+        </div>
+        <div class="metric-card-body">
+          <span class="metric-card-label">Total Tasks</span>
+          <div class="metric-card-value" th:text="${report.total}">42</div>
+          <div class="metric-card-note trend-note" th:if="${report.hasPrevious and !report.totalChange.contains('prior')}">
+            <span class="trend-arrow" th:classappend="${#strings.startsWith(report.totalChange, '+')} ? 'trend-up' : (${#strings.startsWith(report.totalChange, '-')} ? 'trend-down' : '')"
+                  th:text="${#strings.startsWith(report.totalChange, '+')} ? '↑' : (${#strings.startsWith(report.totalChange, '-')} ? '↓' : '')">↑</span>
+            <span class="trend-value" th:classappend="${#strings.startsWith(report.totalChange, '+')} ? 'trend-up' : (${#strings.startsWith(report.totalChange, '-')} ? 'trend-down' : '')"
+                  th:text="${report.totalChange}">+12%</span>
+            <span class="trend-period" th:text="${period == 'week' ? 'from last week' : (period == 'month' ? 'from last month' : (period == 'quarter' ? 'from last quarter' : (period == 'year' ? 'from last year' : 'from previous period')))}">from last week</span>
+          </div>
+          <div class="metric-card-note" th:unless="${report.hasPrevious and !report.totalChange.contains('prior')}">Planned in this period</div>
+        </div>
+      </article>
+
+      <!-- Card 2: Completed -->
+      <article class="metric-card metric-card-amber surface">
+        <div class="metric-card-top">
+          <div class="metric-icon-box icon-box-amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+          </div>
+        </div>
+        <div class="metric-card-body">
+          <span class="metric-card-label">Completed</span>
+          <div class="metric-card-value" th:text="${report.completed}">28</div>
+          <div class="metric-card-note trend-note" th:if="${report.hasPrevious and report.completedChange != 'No prior count'}">
+            <span class="trend-arrow" th:classappend="${#strings.startsWith(report.completedChange, '+')} ? 'trend-up' : (${#strings.startsWith(report.completedChange, '-')} ? 'trend-down' : '')"
+                  th:text="${#strings.startsWith(report.completedChange, '+')} ? '↑' : (${#strings.startsWith(report.completedChange, '-')} ? '↓' : '')">↑</span>
+            <span class="trend-value" th:classappend="${#strings.startsWith(report.completedChange, '+')} ? 'trend-up' : (${#strings.startsWith(report.completedChange, '-')} ? 'trend-down' : '')"
+                  th:text="${report.completedChange}">+33%</span>
+            <span class="trend-period" th:text="${period == 'week' ? 'from last week' : (period == 'month' ? 'from last month' : (period == 'quarter' ? 'from last quarter' : (period == 'year' ? 'from last year' : 'from previous period')))}">from last week</span>
+          </div>
+          <div class="metric-card-note" th:unless="${report.hasPrevious and report.completedChange != 'No prior count'}">Of tasks planned in this period</div>
+        </div>
+      </article>
+
+      <!-- Card 3: Completion Rate -->
+      <article class="metric-card metric-card-green surface">
+        <div class="metric-card-top">
+          <div class="metric-icon-box icon-box-green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="6"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+          </div>
+        </div>
+        <div class="metric-card-body">
+          <span class="metric-card-label">Completion Rate</span>
+          <div class="metric-card-value" th:text="|${report.rate}%|">67%</div>
+          <div class="metric-card-note trend-note" th:if="${report.hasPrevious}">
+            <span class="trend-arrow" th:classappend="${report.rateChange > 0} ? 'trend-up' : (${report.rateChange < 0} ? 'trend-down' : '')"
+                  th:text="${report.rateChange > 0 ? '↑' : (report.rateChange < 0 ? '↓' : '')}">↑</span>
+            <span class="trend-value" th:classappend="${report.rateChange > 0} ? 'trend-up' : (${report.rateChange < 0} ? 'trend-down' : '')"
+                  th:text="${(report.rateChange > 0 ? '+' : '') + report.rateChange + ' pp'}">+10 pp</span>
+            <span class="trend-period" th:text="${period == 'week' ? 'from last week' : (period == 'month' ? 'from last month' : (period == 'quarter' ? 'from last quarter' : (period == 'year' ? 'from last year' : 'from previous period')))}">from last week</span>
+          </div>
+          <div class="metric-card-note" th:unless="${report.hasPrevious}">Completed share of planned tasks</div>
+        </div>
+      </article>
+
+      <!-- Card 4: Current Streak -->
+      <article class="metric-card metric-card-purple surface">
+        <div class="metric-card-top">
+          <div class="metric-icon-box icon-box-purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="metric-card-body">
+          <span class="metric-card-label">Current Streak</span>
+          <div class="metric-card-value" th:text="${report.streak + (report.streak == 1 ? ' day' : ' days')}">6 days</div>
+          <div class="metric-card-note" th:text="${'Best: ' + report.bestStreak + (report.bestStreak == 1 ? ' day' : ' days')}">Best: 14 days</div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Main Analytics Panels Grid -->
+    <div class="analytics-panels">
+      <!-- Panel 1: Weekly Progress -->
+      <section class="surface analytics-panel" aria-labelledby="analytics-progress-title">
+        <div class="analytics-panel-header">
+          <div class="d-flex align-items-center gap-2">
+            <div class="panel-header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="12" width="4" height="9" rx="1"/>
+                <rect x="10" y="7" width="4" height="14" rx="1"/>
+                <rect x="17" y="3" width="4" height="18" rx="1"/>
+              </svg>
+            </div>
+            <div>
+              <h2 id="analytics-progress-title" th:text="${period == 'week' ? 'Weekly Progress' : 'Period Progress'}">Weekly Progress</h2>
+              <p>Tasks completed vs. planned</p>
+            </div>
+          </div>
+          <div class="analytics-legend">
+            <span class="legend-dot legend-completed">Completed</span>
+            <span class="legend-dot legend-planned">Planned</span>
+          </div>
+        </div>
+        <div class="analytics-plot">
+          <div class="analytics-axis" aria-hidden="true">
+            <span th:each="step : ${#numbers.sequence(4, 0, -1)}" th:text="${report.axisMax * step / 4}">0</span>
+          </div>
+          <div class="analytics-bars" th:style="|--columns:${report.progress.size()}|">
+            <div class="analytics-bar-group" th:each="point : ${report.progress}"
+                 th:attr="aria-label=|${point.range}: ${point.completed} completed, ${point.planned} planned|"
+                 role="img" th:title="|${point.range}: ${point.completed} completed, ${point.planned} planned|">
+              <div class="analytics-bar-pair" aria-hidden="true">
+                <span class="bar-planned" th:style="|--value:${point.planned * 100.0 / report.axisMax}%|" title="Planned"></span>
+                <span class="bar-completed" th:style="|--value:${point.completed * 100.0 / report.axisMax}%|" title="Completed"></span>
+              </div>
+              <span class="analytics-date" th:text="${point.label}">Date</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 2: Tasks by Category -->
+      <section class="surface analytics-panel" aria-labelledby="analytics-category-title">
+        <div class="analytics-panel-header">
+          <div class="d-flex align-items-center gap-2">
+            <div class="panel-header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                <polyline points="17 6 23 6 23 12"/>
+              </svg>
+            </div>
+            <h2 id="analytics-category-title">Tasks by Category</h2>
+          </div>
+        </div>
+        <p class="analytics-empty py-4 text-center text-muted" th:if="${report.categories.isEmpty()}">No tasks planned in this period.</p>
+        <div class="analytics-category-layout" th:unless="${report.categories.isEmpty()}">
+          <div class="analytics-donut" th:style="|--category-stops:${report.categoryStops}|" aria-hidden="true">
+            <div class="donut-inner-content">
+              <strong th:text="${report.total}">0</strong>
+              <span>Tasks</span>
+            </div>
+          </div>
+          <ul class="analytics-categories">
+            <li th:each="category : ${report.categories}" th:style="|--category-color:${category.color}|">
+              <div class="d-flex align-items-center gap-2">
+                <span class="category-legend-dot" th:style="|background-color:${category.color}|"></span>
+                <span class="category-name" th:text="${category.name}">Category</span>
+              </div>
+              <strong class="category-stat" th:text="|${category.percent}% (${category.count})|">0% (0)</strong>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Panel 3: Completion Trend -->
+      <section class="surface analytics-panel" aria-labelledby="analytics-trend-title">
+        <div class="analytics-panel-header">
+          <div class="d-flex align-items-center gap-2">
+            <div class="panel-header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                <polyline points="17 6 23 6 23 12"/>
+              </svg>
+            </div>
+            <div>
+              <h2 id="analytics-trend-title">Completion Trend</h2>
+              <p>Task completion rate over time</p>
+            </div>
+          </div>
+        </div>
+        <div class="analytics-plot">
+          <div class="analytics-axis" aria-hidden="true">
+            <span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span>
+          </div>
+          <div class="analytics-trend">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#2563eb" stop-opacity="0.35"/>
+                  <stop offset="100%" stop-color="#2563eb" stop-opacity="0.02"/>
+                </linearGradient>
+              </defs>
+              <polygon th:if="${report.progress.size() > 1}" th:attr="points=|0,100 ${report.trendPoints} 100,100|" fill="url(#trendGradient)"/>
+              <polyline th:attr="points=${report.trendPoints}" vector-effect="non-scaling-stroke" fill="none" stroke="#2563eb" stroke-width="2"/>
+              <circle th:if="${report.progress.size() == 1}" cx="50" th:attr="cy=${100 - report.progress[0].rate}" r="3" fill="#2563eb"/>
+            </svg>
+            <div class="analytics-trend-labels" th:style="|--columns:${report.progress.size()}|">
+              <span th:each="point : ${report.progress}" class="analytics-date">
+                <span aria-hidden="true" th:text="${point.label}">Date</span>
+                <span class="visually-hidden" th:text="|${point.range}: ${point.rate}% cumulative completion|"></span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 4: Productivity Insights -->
+      <section class="surface analytics-panel" aria-labelledby="analytics-insights-title">
+        <div class="analytics-panel-header">
+          <div class="d-flex align-items-center gap-2">
+            <div class="panel-header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18h6"/>
+                <path d="M10 22h4"/>
+                <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5.76.76 1.23 1.52 1.41 2.5"/>
+              </svg>
+            </div>
+            <h2 id="analytics-insights-title">Productivity Insights</h2>
+          </div>
+        </div>
+        <ul class="analytics-insights-list">
+          <li class="insight-row-card">
+            <span class="insight-icon-box icon-box-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+            </span>
+            <span class="insight-text" th:text="|You completed ${report.rate}% of your tasks this ${period == 'week' ? 'week' : (period == 'month' ? 'month' : (period == 'quarter' ? 'quarter' : (period == 'year' ? 'year' : 'period')))} (${report.completed} of ${report.total} planned tasks are complete (${report.rate}%).)|">You completed 67% of your tasks this week (28 of 42 planned tasks are complete (67%)).</span>
+          </li>
+          <li class="insight-row-card" th:if="${report.bestDayCount > 0}">
+            <span class="insight-icon-box icon-box-purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </span>
+            <span class="insight-text" th:text="|Your most productive day was ${report.bestDay} (${report.bestDayCount} tasks completed).|">Your most productive day was Sunday (12 tasks completed).</span>
+          </li>
+          <li class="insight-row-card">
+            <span class="insight-icon-box icon-box-amber">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            </span>
+            <span class="insight-text" th:if="${report.streak > 0}" th:text="|You're on a ${report.streak}-day streak. Keep it up!|">You're on a 6-day streak. Keep it up!</span>
+            <span class="insight-text" th:unless="${report.streak > 0}">Complete a task today to start your streak!</span>
+          </li>
+          <li class="insight-row-card" th:unless="${report.categories.isEmpty()}" th:with="top=${report.categories[0]}">
+            <span class="insight-icon-box icon-box-blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg>
+            </span>
+            <span class="insight-text" th:text="|${top.name} accounts for ${top.percent}% of planned tasks.|">Learning tasks accounts for 25% of planned tasks.</span>
+          </li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/analytics.js(v='1.0.1')}"></script>
+</body>
+</html>

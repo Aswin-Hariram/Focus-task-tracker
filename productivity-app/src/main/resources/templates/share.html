@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<aside th:replace="~{fragments/layout :: sidebar}"></aside>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main class="page-shell">
+  <div class="page-container" style="max-width: 68rem">
+
+    <!-- Hero Banner with Slate Nature Illustration -->
+    <div class="page-hero-banner hero-banner-slate mb-4">
+      <div class="hero-banner-content">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge bg-primary text-white fw-bold px-2 py-1" style="font-size: 0.75rem;">SHARING CENTER</span>
+        </div>
+        <h1 class="hero-banner-title">Share Focus App</h1>
+        <p class="hero-banner-subtitle">Create and distribute a link so colleagues or friends can download a fresh, self-contained Focus workspace with installation guides for macOS, Windows, and Linux.</p>
+        <div class="hero-banner-actions">
+          <a class="btn btn-primary btn-sm shadow-sm" th:href="@{/download}" target="_blank" rel="noopener">
+            <svg class="btn-icon"><use th:href="@{/images/icons.svg#external-link}"/></svg>Open fresh download page
+          </a>
+          <a class="btn btn-outline-secondary btn-sm" th:href="@{/settings}">
+            <svg class="btn-icon"><use th:href="@{/images/icons.svg#settings}"/></svg>Settings
+          </a>
+        </div>
+      </div>
+      <div th:replace="~{fragments/layout :: heroIllustration}"></div>
+    </div>
+
+    <!-- Main Share Link Generator Card -->
+    <section class="surface mb-4">
+      <div class="surface-header">
+        <div>
+          <h2 class="section-heading">Shareable Fresh Download Link</h2>
+          <p class="section-caption">Send this link to anyone. When opened, they get direct download options for their operating system and step-by-step setup guides.</p>
+        </div>
+      </div>
+      <div class="surface-body">
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <label class="form-label small fw-semibold text-secondary mb-0" for="primaryShareInput">Primary Share URL</label>
+            <div class="btn-group btn-group-sm" role="group" aria-label="URL variant">
+              <button type="button" class="btn btn-outline-secondary btn-sm active" id="btnUrlHost" onclick="setUrlMode('host')">Browser Host</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="btnUrlLan" onclick="setUrlMode('lan')" th:if="${lanUrl != null}">Local Network (LAN)</button>
+            </div>
+          </div>
+          <div class="input-group input-group-lg">
+            <span class="input-group-text bg-body-tertiary text-secondary">
+              <svg class="btn-icon"><use th:href="@{/images/icons.svg#link}"/></svg>
+            </span>
+            <input type="text" class="form-control font-monospace" id="primaryShareInput" readonly th:value="${shareUrl}">
+            <button class="btn btn-primary px-4" type="button" id="copyShareBtn" onclick="copyMainShareLink()">
+              <svg class="btn-icon"><use th:href="@{/images/icons.svg#copy}"/></svg>
+              <span id="copyBtnText">Copy link</span>
+            </button>
+            <a class="btn btn-outline-secondary px-3 d-flex align-items-center" th:href="@{/download}" target="_blank" rel="noopener" title="Open download page">
+              <svg class="btn-icon"><use th:href="@{/images/icons.svg#external-link}"/></svg>
+            </a>
+          </div>
+          <div id="copySuccessAlert" class="alert alert-success d-flex align-items-center gap-2 mt-2 py-2 px-3 small" style="display: none;">
+            <svg class="btn-icon text-success"><use th:href="@{/images/icons.svg#check-circle}"/></svg>
+            <span><strong>Copied!</strong> Share link is copied to your clipboard. Send it to anyone on your team or network.</span>
+          </div>
+        </div>
+
+        <!-- Pre-written quick invite messages -->
+        <div class="p-3 rounded border bg-light-subtle">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+            <strong class="small fw-bold text-secondary">Pre-Composed Share Snippets:</strong>
+            <span class="text-secondary small" style="font-size: 0.8rem;">Click to copy an invitation with your link included</span>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copySnippet('slack')">
+              <svg class="btn-icon me-1"><use th:href="@{/images/icons.svg#message-square}"/></svg>Copy for Slack / Teams
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copySnippet('email')">
+              <svg class="btn-icon me-1"><use th:href="@{/images/icons.svg#inbox}"/></svg>Copy Email Invitation
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copySnippet('markdown')">
+              <svg class="btn-icon me-1"><use th:href="@{/images/icons.svg#file-text}"/></svg>Copy Markdown Link
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- What Recipients Will Experience -->
+    <section class="surface mb-4">
+      <div class="surface-header">
+        <div>
+          <h2 class="section-heading">What the Recipient Gets When Opening the Link</h2>
+          <p class="section-caption">The shared link leads to a modern, zero-configuration setup portal.</p>
+        </div>
+      </div>
+      <div class="surface-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="p-3 rounded border bg-light-subtle h-100">
+              <div class="d-flex align-items-center gap-2 mb-2 text-primary">
+                <svg class="btn-icon"><use th:href="@{/images/icons.svg#target}"/></svg>
+                <strong class="text-body">100% Fresh Local Start</strong>
+              </div>
+              <p class="small text-secondary mb-0">Recipients get a clean local instance without accessing your private tasks or personal database records.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 rounded border bg-light-subtle h-100">
+              <div class="d-flex align-items-center gap-2 mb-2 text-primary">
+                <svg class="btn-icon"><use th:href="@{/images/icons.svg#bolt}"/></svg>
+                <strong class="text-body">Native Embedded PostgreSQL</strong>
+              </div>
+              <p class="small text-secondary mb-0">No Docker or manual PostgreSQL setup required. Focus starts its own database automatically on port 5433.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 rounded border bg-light-subtle h-100">
+              <div class="d-flex align-items-center gap-2 mb-2 text-primary">
+                <svg class="btn-icon"><use th:href="@{/images/icons.svg#shield-check}"/></svg>
+                <strong class="text-body">Complete Privacy & Offline</strong>
+              </div>
+              <p class="small text-secondary mb-0">Everything persists locally in their machine. No external cloud telemetry, account creation, or subscriptions.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Available Packages Directory Table -->
+    <section class="surface">
+      <div class="surface-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>
+          <h2 class="section-heading">Platform Download Packages Ready to Serve</h2>
+          <p class="section-caption">These installers and standalone bundles are hosted directly by Focus and ready to download.</p>
+        </div>
+        <a class="btn btn-outline-secondary btn-sm" th:href="@{/download}">
+          <svg class="btn-icon"><use th:href="@{/images/icons.svg#eye}"/></svg>View Public Portal
+        </a>
+      </div>
+      <div class="surface-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 18%;">Platform</th>
+                <th style="width: 32%;">Package Description</th>
+                <th style="width: 22%;">Filename</th>
+                <th style="width: 12%;">Size</th>
+                <th style="width: 16%;" class="text-end">Direct Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="rel : ${releases}">
+                <td>
+                  <span class="badge" th:classappend="${rel.platform == 'macOS'} ? 'bg-dark text-white' : (${rel.platform == 'Windows'} ? 'bg-primary text-white' : 'bg-secondary text-white')" th:text="${rel.platform}">macOS</span>
+                </td>
+                <td>
+                  <strong class="d-block small text-body" th:text="${rel.name}">Installer</strong>
+                  <span class="text-secondary small" style="font-size: 0.78rem;" th:text="${rel.description}">Description</span>
+                </td>
+                <td>
+                  <code class="small text-body" th:text="${rel.filename}">Focus-1.0.0.dmg</code>
+                </td>
+                <td>
+                  <span class="badge bg-light text-secondary border font-monospace" th:text="${rel.displaySize}">134 MB</span>
+                </td>
+                <td class="text-end">
+                  <a class="btn btn-outline-primary btn-sm py-1 px-2" th:href="@{/download/file/{key}(key=${rel.key})}">
+                    <svg class="btn-icon" style="width: 0.85rem; height: 0.85rem;"><use th:href="@{/images/icons.svg#download}"/></svg>Download
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  var defaultHostUrl = /*[[${shareUrl}]]*/ '';
+  var lanHostUrl = /*[[${lanUrl}]]*/ '';
+  /*]]>*/
+
+  (function() {
+    var shareInput = document.getElementById('primaryShareInput');
+    if (shareInput && (!defaultHostUrl || defaultHostUrl.indexOf('localhost') !== -1)) {
+      shareInput.value = window.location.origin + '/download';
+    }
+  })();
+
+  function setUrlMode(mode) {
+    var input = document.getElementById('primaryShareInput');
+    var btnHost = document.getElementById('btnUrlHost');
+    var btnLan = document.getElementById('btnUrlLan');
+    if (mode === 'lan' && lanHostUrl) {
+      input.value = lanHostUrl;
+      btnLan.classList.add('active');
+      btnHost.classList.remove('active');
+    } else {
+      input.value = window.location.origin + '/download';
+      btnHost.classList.add('active');
+      if (btnLan) btnLan.classList.remove('active');
+    }
+  }
+
+  function copyMainShareLink() {
+    var input = document.getElementById('primaryShareInput');
+    if (!input) return;
+    navigator.clipboard.writeText(input.value).then(function() {
+      showCopyFeedback('Copied!');
+    }).catch(function() {
+      input.select();
+      document.execCommand('copy');
+      showCopyFeedback('Copied!');
+    });
+  }
+
+  function showCopyFeedback(msg) {
+    var label = document.getElementById('copyBtnText');
+    var alertBox = document.getElementById('copySuccessAlert');
+    if (label) label.textContent = msg;
+    if (alertBox) alertBox.style.display = 'flex';
+    setTimeout(function() {
+      if (label) label.textContent = 'Copy link';
+      if (alertBox) alertBox.style.display = 'none';
+    }, 3500);
+  }
+
+  function copySnippet(type) {
+    var url = document.getElementById('primaryShareInput').value;
+    var text = '';
+    if (type === 'slack') {
+      text = "👋 Hey! Here's the link to download and set up Focus (Personal Productivity Tracker) fresh on your machine:\n" + url + "\nIt includes native packages for macOS, Windows, and Linux with zero database configuration required!";
+    } else if (type === 'email') {
+      text = "Hi,\n\nI wanted to share Focus — a personal productivity and task management tracker that runs completely privately on your machine.\n\nYou can download a fresh copy with setup instructions here:\n" + url + "\n\nEnjoy!\n";
+    } else if (type === 'markdown') {
+      text = "[Download Focus — Personal Productivity Tracker](" + url + ")";
+    }
+    navigator.clipboard.writeText(text).then(function() {
+      showCopyFeedback('Snippet copied!');
+    });
+  }
+</script>
+
+</body>
+</html>

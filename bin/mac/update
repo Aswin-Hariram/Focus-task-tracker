@@ -1,0 +1,232 @@
+#!/usr/bin/env bash
+# Focus Productivity Tracker - macOS Updater Executable
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BIN_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+PROJECT_DIR="$(cd "${BIN_DIR}/.." && pwd)"
+
+TARGET_JAR="${BIN_DIR}/focus.jar"
+BACKUP_JAR="${BIN_DIR}/focus.jar.bak"
+PID_FILE="${PROJECT_DIR}/storage/focus.pid"
+SERVER_PORT="${SERVER_PORT:-8484}"
+
+SOURCE_MODE="auto"
+INPUT_FILE=""
+DOWNLOAD_URL=""
+DO_ROLLBACK=false
+NO_RESTART=false
+VERSION_TAG=""
+
+usage() {
+    cat <<EOF
+Focus Productivity Tracker - macOS Updater
+
+Usage:
+  $(basename "$0") [options]
+
+Options:
+  --file <path>        Update using specified JAR file
+  --url <url>          Download and install update from URL
+  --from-source        Rebuild application from source using Maven
+  --rollback           Revert to the previous backup version (focus.jar.bak)
+  --no-restart         Do not automatically restart Focus after updating
+  --version <ver>      Specify version metadata tag
+  -h, --help           Show this help message
+EOF
+    exit 0
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --file)
+            SOURCE_MODE="file"
+            INPUT_FILE="$2"
+            shift 2
+            ;;
+        --url)
+            SOURCE_MODE="url"
+            DOWNLOAD_URL="$2"
+            shift 2
+            ;;
+        --from-source|--build)
+            SOURCE_MODE="source"
+            shift
+            ;;
+        --rollback)
+            DO_ROLLBACK=true
+            shift
+            ;;
+        --no-restart)
+            NO_RESTART=true
+            shift
+            ;;
+        --version)
+            VERSION_TAG="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            usage
+            ;;
+    esac
+done
+
+ensure_java() {
+    if ! command -v java >/dev/null 2>&1; then
+        echo "Error: Java 17+ is required but not installed or not in PATH." >&2
+        exit 1
+    fi
+}
+
+is_running() {
+    if [[ -f "${PID_FILE}" ]]; then
+        local pid
+        pid=$(cat "${PID_FILE}" 2>/dev/null || true)
+        if [[ -n "${pid}" ]] && ps -p "${pid}" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+echo "========================================================"
+echo "   Focus Productivity Tracker - macOS Updater"
+echo "========================================================"
+
+ensure_java
+
+# Handle rollback request
+if [[ "${DO_ROLLBACK}" == "true" ]]; then
+    if [[ ! -f "${BACKUP_JAR}" ]]; then
+        echo "Error: No backup JAR found at ${BACKUP_JAR}" >&2
+        exit 1
+    fi
+    echo "Rolling back to backup version..."
+    WAS_RUNNING=false
+    if is_running; then
+        WAS_RUNNING=true
+        echo "Stopping running Focus instance..."
+        "${SCRIPT_DIR}/focus" stop
+    fi
+    cp "${BACKUP_JAR}" "${TARGET_JAR}"
+    echo "Restored ${TARGET_JAR} from ${BACKUP_JAR}."
+    if [[ "${WAS_RUNNING}" == "true" && "${NO_RESTART}" != "true" ]]; then
+        echo "Restarting Focus..."
+        "${SCRIPT_DIR}/focus" start
+    fi
+    echo "Rollback completed successfully."
+    exit 0
+fi
+
+TEMP_NEW_JAR="/tmp/focus-update-new-$$.jar"
+cleanup() {
+    rm -f "${TEMP_NEW_JAR}"
+}
+trap cleanup EXIT
+
+# 1. Acquire new JAR
+case "${SOURCE_MODE}" in
+    file)
+        if [[ ! -f "${INPUT_FILE}" ]]; then
+            echo "Error: Specified file does not exist: ${INPUT_FILE}" >&2
+            exit 1
+        fi
+        echo "Updating from local file: ${INPUT_FILE}"
+        cp "${INPUT_FILE}" "${TEMP_NEW_JAR}"
+        ;;
+    url)
+        echo "Downloading update from: ${DOWNLOAD_URL}..."
+        curl -fSL "${DOWNLOAD_URL}" -o "${TEMP_NEW_JAR}"
+        ;;
+    source|auto)
+        if [[ -f "${PROJECT_DIR}/pom.xml" ]]; then
+            echo "Compiling and packaging updated JAR from project source..."
+            if ! command -v mvn >/dev/null 2>&1; then
+                echo "Error: Maven (mvn) is required to build from source." >&2
+                exit 1
+            fi
+            mvn -f "${PROJECT_DIR}/pom.xml" clean package -DskipTests
+            BUILT_JAR="${PROJECT_DIR}/productivity-app/target/productivity-app-1.0.0-SNAPSHOT.jar"
+            if [[ ! -f "${BUILT_JAR}" ]]; then
+                echo "Error: Build succeeded but artifact not found at ${BUILT_JAR}" >&2
+                exit 1
+            fi
+            cp "${BUILT_JAR}" "${TEMP_NEW_JAR}"
+        elif [[ -f "${INPUT_FILE}" ]]; then
+            cp "${INPUT_FILE}" "${TEMP_NEW_JAR}"
+        else
+            echo "Error: No source repository or input file provided. Use --file <path> or --url <url>." >&2
+            exit 1
+        fi
+        ;;
+esac
+
+# 2. Validate new JAR integrity
+echo "Validating update package integrity..."
+if ! unzip -t -q "${TEMP_NEW_JAR}" >/dev/null 2>&1; then
+    echo "Error: Update package is corrupted or not a valid JAR archive!" >&2
+    exit 1
+fi
+echo "Update package integrity check PASSED."
+
+# 3. Check if Focus is currently running
+WAS_RUNNING=false
+if is_running; then
+    WAS_RUNNING=true
+    echo "Focus is currently running. Stopping gracefully before applying update..."
+    "${SCRIPT_DIR}/focus" stop
+fi
+
+# 4. Backup existing JAR
+if [[ -f "${TARGET_JAR}" ]]; then
+    echo "Creating backup of current version -> ${BACKUP_JAR}..."
+    cp "${TARGET_JAR}" "${BACKUP_JAR}"
+fi
+
+# 5. Atomically replace JAR
+echo "Installing new version to ${TARGET_JAR}..."
+cp "${TEMP_NEW_JAR}" "${TARGET_JAR}"
+chmod 644 "${TARGET_JAR}"
+
+echo "Focus binaries updated successfully!"
+if [[ -n "${VERSION_TAG}" ]]; then
+    echo "Version: ${VERSION_TAG}"
+fi
+
+# 6. Restart & Health Check
+if [[ "${WAS_RUNNING}" == "true" && "${NO_RESTART}" != "true" ]]; then
+    echo "Restarting Focus service..."
+    "${SCRIPT_DIR}/focus" start
+
+    echo "Verifying application health..."
+    HEALTHY=false
+    for i in {1..30}; do
+        if curl -s "http://localhost:${SERVER_PORT}" >/dev/null 2>&1 || \
+           curl -s "http://localhost:${SERVER_PORT}/actuator/health" >/dev/null 2>&1; then
+            HEALTHY=true
+            break
+        fi
+        sleep 1
+    done
+
+    if [[ "${HEALTHY}" == "true" ]]; then
+        echo "Health check PASSED! Focus is running and healthy at http://localhost:${SERVER_PORT}"
+    else
+        echo "Warning: Health check did not respond within 30s. Checking logs..."
+        if [[ -f "${PROJECT_DIR}/storage/logs/focus.log" ]]; then
+            tail -n 20 "${PROJECT_DIR}/storage/logs/focus.log"
+        fi
+        echo "To rollback if necessary, run: $0 --rollback"
+    fi
+else
+    echo "Focus is ready. Run '${SCRIPT_DIR}/focus start' or '${SCRIPT_DIR}/focus run' to launch."
+fi
+
+echo "========================================================"
+echo "   Update completed successfully!"
+echo "========================================================"
+exit 0

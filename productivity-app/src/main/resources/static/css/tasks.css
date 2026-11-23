@@ -1,0 +1,127 @@
+.tasks-page .page-header { margin-bottom: 1.2rem; }
+.tasks-page .page-title { font-size: clamp(1.8rem, 3vw, 2.25rem); }
+.tasks-page .page-subtitle { margin-top: .15rem; }
+:root[data-theme="light"] .tasks-page { background: #f5f7fa; }
+
+.tasks-page .metrics-grid { margin-bottom: 1.6rem; }
+.tasks-page .metric-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  min-height: 6.8rem;
+  padding: .9rem 1.1rem;
+  background: linear-gradient(130deg, var(--color-surface), color-mix(in srgb, var(--metric-wave, #4b7caf) 10%, var(--color-surface)));
+}
+.tasks-page .metric-card:hover { transform: none; box-shadow: var(--shadow-card); }
+.tasks-page .metric-card::before { opacity: .7; }
+.tasks-page .metric-icon-box {
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 3rem;
+}
+.tasks-page .metric-icon-box svg { width: 1.6rem; height: 1.6rem; }
+.tasks-page .metric-card-label { margin-top: 0; }
+
+.tasks-navigation, .tasks-tabs, .tasks-filters, .tasks-pagination, .tasks-pagination nav, .tasks-view {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
+.tasks-navigation { justify-content: space-between; margin-bottom: .9rem; }
+.tasks-view {
+  gap: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+.tasks-view span, .tasks-view a {
+  display: grid;
+  min-width: 2.8rem;
+  min-height: 2.25rem;
+  place-items: center;
+  color: var(--color-text);
+}
+.tasks-view span { background: var(--color-primary); color: white; }
+.tasks-view svg, .tasks-date svg { width: 1rem; height: 1rem; flex: none; }
+
+.tasks-results { border-radius: .8rem; }
+.tasks-filters { padding: .75rem; border-bottom: 1px solid var(--color-border); }
+.tasks-filters .form-select { width: auto; min-width: 8rem; min-height: 2.35rem; font-size: .82rem; }
+.tasks-filters .tasks-sort { margin-inline-start: auto; }
+
+.tasks-results .data-table { --bs-table-bg: transparent; min-width: 52rem; }
+.tasks-results .data-table th {
+  font-size: .8rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.tasks-results .data-table td { padding-block: .6rem; }
+.tasks-results .data-table tbody tr:hover { background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface)); }
+.tasks-name { width: 28%; }
+.tasks-name > a { font-size: .94rem; }
+.tasks-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  color: var(--color-muted);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.tasks-progress, .tasks-date { display: flex; align-items: center; gap: .5rem; white-space: nowrap; }
+.tasks-progress progress {
+  appearance: none;
+  width: clamp(4rem, 8vw, 8.5rem);
+  height: .45rem;
+  border: 0;
+  border-radius: 1rem;
+  background: var(--color-border);
+  color: var(--color-primary);
+}
+.tasks-progress progress.is-completed { color: #16a34a; }
+.tasks-progress progress::-webkit-progress-bar { border-radius: 1rem; background: var(--color-border); }
+.tasks-progress progress::-webkit-progress-value { border-radius: 1rem; background: currentColor; }
+.tasks-progress progress::-moz-progress-bar { border-radius: 1rem; background: currentColor; }
+.tasks-progress span { min-width: 2.6rem; font-variant-numeric: tabular-nums; }
+.tasks-actions {
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: .4rem;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 1.15rem;
+}
+.tasks-actions:hover { background: var(--color-border); }
+
+.tasks-pagination {
+  justify-content: space-between;
+  padding: .9rem 1rem;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: .82rem;
+}
+.tasks-pagination nav { gap: .35rem; }
+.tasks-pagination a {
+  display: grid;
+  min-width: 2rem;
+  min-height: 2rem;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: .4rem;
+  color: var(--color-text);
+  text-decoration: none;
+}
+.tasks-pagination a[aria-current="page"] { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+
+@media (min-width: 1200px) {
+  .tasks-results .table-responsive { overflow: visible; }
+}
+@media (max-width: 767.98px) {
+  .tasks-filters .tasks-sort { margin-inline-start: 0; }
+}
+@media (max-width: 1199.98px) {
+  .tasks-results .dropdown-menu.show { position: static !important; transform: none !important; }
+}

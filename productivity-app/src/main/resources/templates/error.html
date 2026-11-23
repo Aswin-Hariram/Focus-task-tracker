@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle != null ? pageTitle : 'Request error'})}"></head>
+<body>
+<main class="page-shell" style="margin-left:0">
+  <div class="page-container" style="max-width:40rem">
+    <section class="surface empty-state">
+      <svg><use th:href="@{/images/icons.svg#info}"/></svg>
+      <h1 class="page-title" th:text="${pageTitle != null ? pageTitle : 'The request could not be completed'}">The request could not be completed</h1>
+      <p th:if="${message != null}" th:text="${message}" class="danger-text">Error details</p>
+      <p th:unless="${message != null}">Your saved data was not changed. Return to the dashboard and try the action again.</p>
+      <a class="btn btn-primary" th:href="@{/dashboard}">Return to dashboard</a>
+    </section>
+  </div>
+</main>
+<script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

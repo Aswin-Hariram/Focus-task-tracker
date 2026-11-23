@@ -1,0 +1,22 @@
+[Unit]
+Description=Focus Personal Productivity Tracker
+After=network.target
+
+[Service]
+Type=simple
+User={{SERVICE_USER}}
+Group={{SERVICE_GROUP}}
+WorkingDirectory={{WORKING_DIR}}
+Environment="SERVER_PORT={{SERVER_PORT}}"
+Environment="EMBEDDED_POSTGRES_PORT={{EMBEDDED_POSTGRES_PORT}}"
+Environment="APP_STORAGE_ROOT={{STORAGE_ROOT}}"
+Environment="APP_POSTGRES_DATA_DIR={{POSTGRES_DATA_DIR}}"
+ExecStart={{JAVA_PATH}} -Dserver.port={{SERVER_PORT}} -DEMBEDDED_POSTGRES_PORT={{EMBEDDED_POSTGRES_PORT}} -jar {{JAR_PATH}}
+ExecStop=/bin/kill -15 $MAINPID
+SuccessExitStatus=143 0
+Restart=always
+RestartSec=10
+LimitNOFILE=65536
+
+[Install]
+WantedBy=default.target

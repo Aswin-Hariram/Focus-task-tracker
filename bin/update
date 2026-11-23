@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Focus Universal Updater Dispatcher
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OS_NAME="$(uname -s 2>/dev/null || echo "Windows")"
+
+case "${OS_NAME}" in
+    Darwin*)
+        exec "${SCRIPT_DIR}/mac/update" "$@"
+        ;;
+    Linux*)
+        exec "${SCRIPT_DIR}/linux/update" "$@"
+        ;;
+    *)
+        echo "Detected OS: ${OS_NAME}"
+        if [[ -x "${SCRIPT_DIR}/linux/update" ]]; then
+            exec "${SCRIPT_DIR}/linux/update" "$@"
+        else
+            echo "Unsupported platform: ${OS_NAME}" >&2
+            exit 1
+        fi
+        ;;
+esac

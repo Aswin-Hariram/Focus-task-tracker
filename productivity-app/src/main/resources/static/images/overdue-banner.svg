@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="770 14 590 288">
+<defs>
+ <linearGradient id="clock" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FF7898"/><stop offset=".55" stop-color="#F43F72"/><stop offset="1" stop-color="#BE225C"/></linearGradient>
+ <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#FFE8ED"/></linearGradient>
+ <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%"><feDropShadow dx="0" dy="9" stdDeviation="9" flood-color="#A73561" flood-opacity=".2"/></filter>
+</defs>
+<g opacity=".22" fill="#FFB4C7"><ellipse cx="1082" cy="276" rx="258" ry="15"/><circle cx="893" cy="164" r="70"/><circle cx="1275" cy="124" r="53"/></g>
+<!-- rear abstract shapes -->
+<path d="M860 280q33-45 71-22t69-8q42-33 80 30Z" fill="#F8A7BE" opacity=".65"/>
+<path d="M1203 275q42-72 88-52t43 52Z" fill="#D9789E" opacity=".5"/>
+<!-- paper and checklist -->
+<g transform="translate(1166 146) rotate(9)" filter="url(#shadow)"><rect width="112" height="130" rx="7" fill="url(#paper)"/><rect x="43" y="13" width="24" height="7" rx="3" fill="#F79BB1"/><circle cx="55" cy="9" r="5" fill="#F06B8E"/><path d="M20 38h70M20 54h62M20 70h68M20 86h49" stroke="#F1A3B9" stroke-width="5" stroke-linecap="round"/><rect x="20" y="101" width="34" height="9" rx="4" fill="#F27598"/></g>
+<!-- clock feet -->
+<g stroke="#8B2857" stroke-width="10" stroke-linecap="round"><path d="M987 253l-20 26M1108 251l21 27"/></g>
+<!-- clock bells -->
+<g filter="url(#shadow)"><path d="M951 93q-19-31 4-48 24-18 48 11l-40 47Z" fill="url(#clock)" stroke="#DB3269" stroke-width="5"/><path d="M1094 61q28-29 49-6 19 22-4 46l-45-40Z" fill="url(#clock)" stroke="#DB3269" stroke-width="5"/><circle cx="968" cy="39" r="7" fill="#E9366E"/><circle cx="1142" cy="51" r="6" fill="#C52D64"/></g>
+<!-- top handle -->
+<path d="M1035 64v-12q0-9 11-9t11 9v12" fill="none" stroke="#81244D" stroke-width="8" stroke-linecap="round"/>
+<!-- clock body -->
+<g filter="url(#shadow)"><circle cx="1045" cy="168" r="113" fill="#D42C64"/><circle cx="1037" cy="163" r="107" fill="url(#clock)"/><circle cx="1037" cy="163" r="85" fill="#FFFDFE" stroke="#FFC4D1" stroke-width="5"/></g>
+<!-- dial ticks -->
+<g stroke="#EE547E" stroke-width="4" stroke-linecap="round">
+<path d="M1037 91v12M1037 223v12M965 163h12M1097 163h12M1001 101l6 11M1067 215l6 11M975 127l11 6M1089 193l11 6M1073 101l-6 11M1007 215l-6 11M1099 127l-11 6M986 193l-11 6"/>
+</g>
+<g stroke="#F04472" stroke-width="5" stroke-linecap="round"><path d="M1037 163l13-65"/><path d="M1037 163l-38 35"/></g><circle cx="1037" cy="163" r="11" fill="#84224E"/><circle cx="1034" cy="159" r="4" fill="#F9A6BD"/>
+<path d="M793 280h535" stroke="#F07A9B" stroke-width="7" stroke-linecap="round" opacity=".75"/>
+</svg>

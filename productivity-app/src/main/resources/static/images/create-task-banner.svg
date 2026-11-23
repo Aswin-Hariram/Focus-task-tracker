@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 1200 180"
+     width="100%"
+     role="img"
+     aria-label="Create Task illustrated banner">
+  <defs>
+    <linearGradient id="bannerBg" x2="1" y2="1">
+      <stop stop-color="#FFF9F2"/>
+      <stop offset=".65" stop-color="#FFF2E6"/>
+      <stop offset="1" stop-color="#F1E9FF"/>
+    </linearGradient>
+    <linearGradient id="bannerWave">
+      <stop stop-color="#FDE6D3"/>
+      <stop offset="1" stop-color="#D9D4FF"/>
+    </linearGradient>
+    <filter id="bannerShadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5"
+                    flood-color="#243B71" flood-opacity=".16"/>
+    </filter>
+  </defs>
+
+  <g transform="scale(1 0.81818182)">
+    <!-- Background -->
+    <rect width="1200" height="220" rx="18" fill="url(#bannerBg)"/>
+    <path d="M0 185 Q160 130 310 187 T650 176 T980 135 T1200 175 V220 H0Z"
+          fill="#FDE4CE" opacity=".7"/>
+    <path d="M520 220 Q690 200 780 160 T990 174 T1200 150 V220Z"
+          fill="url(#bannerWave)"/>
+    <path d="M840 220 Q1040 166 1200 205 V220Z"
+          fill="#B9C9FF" opacity=".7"/>
+  </g>
+
+  <g transform="translate(218.18181818 0) scale(0.81818182)">
+    <!-- Books -->
+    <g filter="url(#bannerShadow)">
+      <rect x="988" y="187" width="98" height="17" rx="4" fill="#3067D4"/>
+      <rect x="996" y="174" width="90" height="15" rx="4"
+            fill="#FFF6E7" stroke="#E99C4D" stroke-width="2"/>
+      <rect x="992" y="161" width="91" height="13" rx="4" fill="#FF9A2E"/>
+    </g>
+
+    <!-- Plant -->
+    <g transform="translate(750 112)">
+      <path d="M32 65 Q-10 28 8 2 Q38 8 32 65Z" fill="#5DAE35"/>
+      <path d="M33 65 Q19 12 52 -10 Q68 24 33 65Z" fill="#70C64B"/>
+      <path d="M34 64 Q49 15 82 24 Q72 57 34 64Z" fill="#369A55"/>
+      <path d="M33 64 Q5 45 -12 39 Q-12 65 33 64Z" fill="#80CD54"/>
+      <path d="M33 65 L34 5 M33 65 L53 9 M33 65 L66 36"
+            stroke="#388E49" stroke-width="2" fill="none"/>
+      <path d="M11 67 H59 L53 105 Q35 114 18 105Z" fill="#3675D8"/>
+      <rect x="9" y="64" width="52" height="9" rx="4" fill="#4B8CF4"/>
+    </g>
+
+    <!-- Calendar -->
+    <g transform="translate(850 105)" filter="url(#bannerShadow)">
+      <rect x="0" y="13" width="85" height="89" rx="8"
+            fill="#FFFFFF" stroke="#AFC3EE" stroke-width="2"/>
+      <rect x="0" y="13" width="85" height="22" rx="7" fill="#FFB66A"/>
+      <path d="M17 6 V20 M68 6 V20" stroke="#3675D8"
+            stroke-width="6" stroke-linecap="round"/>
+      <g fill="#DFE9FF">
+        <rect x="12" y="45" width="10" height="10" rx="2"/>
+        <rect x="29" y="45" width="10" height="10" rx="2"/>
+        <rect x="46" y="45" width="10" height="10" rx="2"/>
+        <rect x="63" y="45" width="10" height="10" rx="2"/>
+        <rect x="12" y="61" width="10" height="10" rx="2"/>
+        <rect x="29" y="61" width="10" height="10" rx="2"/>
+        <rect x="63" y="61" width="10" height="10" rx="2"/>
+        <rect x="12" y="77" width="10" height="10" rx="2"/>
+        <rect x="29" y="77" width="10" height="10" rx="2"/>
+        <rect x="46" y="77" width="10" height="10" rx="2"/>
+        <rect x="63" y="77" width="10" height="10" rx="2"/>
+      </g>
+      <rect x="46" y="61" width="10" height="10" rx="2" fill="#FF9D31"/>
+    </g>
+
+    <!-- Clipboard -->
+    <g transform="translate(955 22)" filter="url(#bannerShadow)">
+      <rect x="0" y="16" width="145" height="181" rx="12" fill="#1D4FAE"/>
+      <rect x="9" y="25" width="127" height="160" rx="7" fill="#FFFFFF"/>
+      <rect x="43" y="8" width="60" height="24" rx="8" fill="#3F7CE3"/>
+      <circle cx="73" cy="12" r="8" fill="#3F7CE3"/>
+      <circle cx="73" cy="12" r="3.5" fill="#FFFFFF"/>
+
+      <g fill="#22B573">
+        <rect x="24" y="60" width="23" height="23" rx="6"/>
+        <rect x="24" y="99" width="23" height="23" rx="6"/>
+        <rect x="24" y="138" width="23" height="23" rx="6"/>
+      </g>
+      <g fill="none" stroke="white" stroke-width="3"
+         stroke-linecap="round" stroke-linejoin="round">
+        <path d="M30 71 l5 5 8 -10"/>
+        <path d="M30 110 l5 5 8 -10"/>
+        <path d="M30 149 l5 5 8 -10"/>
+      </g>
+      <g fill="#CBD5E5">
+        <rect x="57" y="64" width="60" height="6" rx="3"/>
+        <rect x="57" y="103" width="60" height="6" rx="3"/>
+        <rect x="57" y="142" width="60" height="6" rx="3"/>
+      </g>
+      <g fill="#E5EAF3">
+        <rect x="57" y="76" width="43" height="5" rx="2.5"/>
+        <rect x="57" y="115" width="43" height="5" rx="2.5"/>
+        <rect x="57" y="154" width="43" height="5" rx="2.5"/>
+      </g>
+    </g>
+
+    <!-- Target -->
+    <g transform="translate(1122 69)" filter="url(#bannerShadow)">
+      <circle cx="25" cy="28" r="43" fill="#FFAE4C"/>
+      <circle cx="25" cy="28" r="32" fill="#FFF4E9"/>
+      <circle cx="25" cy="28" r="23" fill="#FF9D2C"/>
+      <circle cx="25" cy="28" r="13" fill="#FFF2E5"/>
+      <circle cx="25" cy="28" r="6" fill="#F58220"/>
+      <path d="M25 28 L58 -10" stroke="#234B9B"
+            stroke-width="4" stroke-linecap="round"/>
+      <path d="M56 -10 L69 -15 L65 -2Z" fill="#FF8B25"/>
+    </g>
+  </g>
+</svg>

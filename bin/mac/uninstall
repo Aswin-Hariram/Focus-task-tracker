@@ -1,0 +1,159 @@
+#!/usr/bin/env bash
+# Focus Productivity Tracker - macOS Uninstaller Executable
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BIN_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+PROJECT_DIR="$(cd "${BIN_DIR}/.." && pwd)"
+
+PID_FILE="${PROJECT_DIR}/storage/focus.pid"
+LAUNCHAGENT_PLIST="${HOME}/Library/LaunchAgents/com.productivity.focus.plist"
+LOG_DIR="${HOME}/Library/Logs/Focus"
+APP_SYSTEM="/Applications/Focus.app"
+APP_USER="${HOME}/Applications/Focus.app"
+
+FORCE=false
+PURGE=false
+QUIET=false
+
+usage() {
+    cat <<EOF
+Focus Productivity Tracker - macOS Uninstaller
+
+Usage:
+  $(basename "$0") [options]
+
+Options:
+  -f, --force       Non-interactive mode (do not ask for confirmation)
+  -p, --purge       Purge all user data, database, and settings (irreversible)
+  --keep-data       Keep user data and database intact (default behavior)
+  -q, --quiet       Suppress status messages
+  -h, --help        Show this help message
+EOF
+    exit 0
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -f|--force|-y|--yes)
+            FORCE=true
+            shift
+            ;;
+        -p|--purge)
+            PURGE=true
+            shift
+            ;;
+        --keep-data)
+            PURGE=false
+            shift
+            ;;
+        -q|--quiet)
+            QUIET=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            usage
+            ;;
+    esac
+done
+
+log() {
+    if [[ "${QUIET}" != "true" ]]; then
+        echo "$@"
+    fi
+}
+
+log "========================================================"
+log "   Focus Productivity Tracker - macOS Uninstaller"
+log "========================================================"
+
+if [[ "${FORCE}" != "true" ]]; then
+    if [[ "${PURGE}" == "true" ]]; then
+        read -r -p "WARNING: --purge is set. This will delete all tasks, notes, and database data! Proceed? [y/N]: " confirm
+    else
+        read -r -p "Are you sure you want to uninstall Focus? (Your data will be preserved) [y/N]: " confirm
+    fi
+    case "${confirm}" in
+        [yY][eE][sS]|[yY]) ;;
+        *)
+            log "Uninstallation cancelled."
+            exit 0
+            ;;
+    esac
+fi
+
+# 1. Stop background service / running process
+log ""
+log "[1/5] Checking for running Focus processes..."
+if [[ -f "${SCRIPT_DIR}/focus" ]]; then
+    "${SCRIPT_DIR}/focus" stop 2>/dev/null || true
+fi
+
+# Fallback: check PID file or kill running instance
+if [[ -f "${PID_FILE}" ]]; then
+    PID=$(cat "${PID_FILE}" 2>/dev/null || true)
+    if [[ -n "${PID}" ]] && ps -p "${PID}" >/dev/null 2>&1; then
+        log "Terminating Focus process (PID: ${PID})..."
+        kill -15 "${PID}" 2>/dev/null || true
+        sleep 2
+        kill -9 "${PID}" 2>/dev/null || true
+    fi
+    rm -f "${PID_FILE}"
+fi
+
+# Terminate any remaining java process running focus.jar
+pkill -f "focus\.jar" 2>/dev/null || true
+
+# 2. Remove LaunchAgent service
+log "[2/5] Removing macOS LaunchAgent service..."
+if launchctl list 2>/dev/null | grep -q "com.productivity.focus"; then
+    log "Unloading LaunchAgent..."
+    launchctl unload -w "${LAUNCHAGENT_PLIST}" 2>/dev/null || true
+fi
+if [[ -f "${LAUNCHAGENT_PLIST}" ]]; then
+    rm -f "${LAUNCHAGENT_PLIST}"
+    log "Removed LaunchAgent definition: ${LAUNCHAGENT_PLIST}"
+fi
+
+# 3. Remove /Applications/Focus.app bundle if present
+log "[3/5] Checking application bundles..."
+if [[ -d "${APP_SYSTEM}" ]]; then
+    log "Removing ${APP_SYSTEM}..."
+    rm -rf "${APP_SYSTEM}" 2>/dev/null || sudo rm -rf "${APP_SYSTEM}" 2>/dev/null || true
+fi
+if [[ -d "${APP_USER}" ]]; then
+    log "Removing ${APP_USER}..."
+    rm -rf "${APP_USER}"
+fi
+
+# 4. Clean logs & runtime state
+log "[4/5] Cleaning runtime logs and temporary files..."
+if [[ -d "${LOG_DIR}" ]]; then
+    rm -rf "${LOG_DIR}"
+    log "Removed ${LOG_DIR}"
+fi
+rm -f "${PROJECT_DIR}/storage/focus.pid"
+rm -f "${PROJECT_DIR}/storage/logs/focus.log"
+
+# 5. Handle user data / purge
+log "[5/5] Checking user data & storage..."
+if [[ "${PURGE}" == "true" ]]; then
+    log "Purging user data and database..."
+    rm -rf "${PROJECT_DIR}/storage"
+    rm -rf "${PROJECT_DIR}/postgres-data"
+    log "User data and database purged."
+else
+    log "User data preserved in:"
+    log "  - ${PROJECT_DIR}/storage"
+    log "  - ${PROJECT_DIR}/postgres-data"
+fi
+
+log ""
+log "========================================================"
+log "   Focus has been successfully uninstalled from macOS!"
+log "========================================================"
+exit 0

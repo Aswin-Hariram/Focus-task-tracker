@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <script>
+    (function() {
+      try {
+        const saved = localStorage.getItem('focus-theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = saved === 'dark' || (!saved && prefersDark) ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-bs-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Focus Fresh v1.0.0 — Download &amp; Setup</title>
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+  <style>
+    :root {
+      --ff-primary: #2563eb;
+      --ff-primary-hover: #1d4ed8;
+      --ff-dark: #0f172a;
+      --ff-muted: #64748b;
+      --ff-bg: #f8fafc;
+      --ff-border: #e2e8f0;
+      --ff-card: #ffffff;
+      --ff-card-subtle: #f8fafc;
+      --ff-nav-bg: rgba(255, 255, 255, 0.95);
+      --ff-tab-bg: #f1f5f9;
+      --ff-tab-color: #334155;
+      --ff-tab-hover-bg: #e2e8f0;
+      --ff-badge-bg: #eff6ff;
+      --ff-badge-border: #bfdbfe;
+      --ff-badge-color: #1d4ed8;
+    }
+
+    :root[data-theme="dark"],
+    [data-bs-theme="dark"] {
+      --ff-primary: #3b82f6;
+      --ff-primary-hover: #60a5fa;
+      --ff-dark: #f4f4f5;
+      --ff-muted: #a1a1aa;
+      --ff-bg: #09090b;
+      --ff-border: #27272a;
+      --ff-card: #141416;
+      --ff-card-subtle: #18181b;
+      --ff-nav-bg: rgba(14, 14, 16, 0.92);
+      --ff-tab-bg: #18181b;
+      --ff-tab-color: #cbd5e1;
+      --ff-tab-hover-bg: #27272a;
+      --ff-badge-bg: rgba(37, 99, 235, 0.15);
+      --ff-badge-border: rgba(59, 130, 246, 0.35);
+      --ff-badge-color: #60a5fa;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --ff-primary: #3b82f6;
+        --ff-primary-hover: #60a5fa;
+        --ff-dark: #f4f4f5;
+        --ff-muted: #a1a1aa;
+        --ff-bg: #09090b;
+        --ff-border: #27272a;
+        --ff-card: #141416;
+        --ff-card-subtle: #18181b;
+        --ff-nav-bg: rgba(14, 14, 16, 0.92);
+        --ff-tab-bg: #18181b;
+        --ff-tab-color: #cbd5e1;
+        --ff-tab-hover-bg: #27272a;
+        --ff-badge-bg: rgba(37, 99, 235, 0.15);
+        --ff-badge-border: rgba(59, 130, 246, 0.35);
+        --ff-badge-color: #60a5fa;
+      }
+    }
+
+    body.download-site {
+      background-color: var(--ff-bg);
+      color: var(--ff-dark);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* ---- NAV ---- */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1050;
+      background: var(--ff-nav-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--ff-border);
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    .brand-mark-square {
+      width: 2rem; height: 2rem;
+      background: var(--ff-primary); color: #fff;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.1rem; border-radius: 0.45rem;
+      flex-shrink: 0;
+    }
+    .nav-pill-active {
+      background: #dbeafe !important; color: #1d4ed8 !important;
+      font-weight: 600; border-radius: 9999px; padding: 0.3rem 0.9rem;
+      text-decoration: none; font-size: 0.9rem;
+    }
+    :root[data-theme="dark"] .nav-pill-active,
+    [data-bs-theme="dark"] .nav-pill-active {
+      background: rgba(37, 99, 235, 0.22) !important;
+      color: #60a5fa !important;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .nav-pill-active {
+        background: rgba(37, 99, 235, 0.22) !important;
+        color: #60a5fa !important;
+      }
+    }
+    .nav-link-dl {
+      color: var(--ff-muted); font-weight: 500; text-decoration: none;
+      padding: 0.3rem 0.6rem; font-size: 0.9rem; transition: color 0.15s;
+    }
+    .nav-link-dl:hover { color: var(--ff-dark); }
+
+    /* Theme toggle button in nav */
+    .site-nav .theme-toggle-btn {
+      width: 2.1rem;
+      height: 2.1rem;
+      padding: 0;
+      border-radius: 0.5rem;
+      border: 1px solid var(--ff-border);
+      background: var(--ff-card);
+      color: var(--ff-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .site-nav .theme-toggle-btn:hover {
+      background: var(--ff-border);
+      color: var(--ff-dark);
+      transform: scale(1.05);
+    }
+    :root[data-theme="dark"] .site-nav .theme-toggle-btn,
+    [data-bs-theme="dark"] .site-nav .theme-toggle-btn {
+      background: #18181b;
+      border-color: #27272a;
+      color: #e4e4e7;
+    }
+    :root[data-theme="dark"] .site-nav .theme-toggle-btn:hover,
+    [data-bs-theme="dark"] .site-nav .theme-toggle-btn:hover {
+      background: #27272a;
+      color: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .site-nav .theme-toggle-btn {
+        background: #18181b;
+        border-color: #27272a;
+        color: #e4e4e7;
+      }
+      :root:not([data-theme="light"]) .site-nav .theme-toggle-btn:hover {
+        background: #27272a;
+        color: #ffffff;
+      }
+      :root:not([data-theme="light"]) .theme-toggle-btn .theme-icon-light { display: block; color: #fbbf24; }
+      :root:not([data-theme="light"]) .theme-toggle-btn .theme-icon-dark { display: none; }
+    }
+
+    /* ---- HERO ---- */
+    .hero-section {
+      position: relative;
+      padding: 4rem 0 2.5rem;
+    }
+    .hero-section::before {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 55% at 85% 20%, rgba(219,234,254,0.7) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 15% 60%, rgba(238,242,255,0.5) 0%, transparent 65%);
+    }
+    :root[data-theme="dark"] .hero-section::before,
+    [data-bs-theme="dark"] .hero-section::before {
+      background:
+        radial-gradient(ellipse 60% 55% at 85% 20%, rgba(30, 58, 138, 0.3) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 15% 60%, rgba(49, 46, 129, 0.22) 0%, transparent 65%);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .hero-section::before {
+        background:
+          radial-gradient(ellipse 60% 55% at 85% 20%, rgba(30, 58, 138, 0.3) 0%, transparent 70%),
+          radial-gradient(ellipse 40% 40% at 15% 60%, rgba(49, 46, 129, 0.22) 0%, transparent 65%);
+      }
+    }
+    .hero-badge-pill {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: var(--ff-badge-bg); border: 1px solid var(--ff-badge-border); color: var(--ff-badge-color);
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; padding: 0.28rem 0.75rem; border-radius: 9999px;
+    }
+    .hero-title {
+      font-size: clamp(2.4rem, 4.8vw, 3.4rem);
+      font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; color: var(--ff-dark);
+    }
+    .hero-title .ver-blue { color: var(--ff-primary); }
+    .hero-dots-line {
+      font-weight: 700; font-size: 1.0rem; color: #334155;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.3rem;
+    }
+    :root[data-theme="dark"] .hero-dots-line,
+    [data-bs-theme="dark"] .hero-dots-line {
+      color: #cbd5e1;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .hero-dots-line {
+        color: #cbd5e1;
+      }
+    }
+    .hero-dots-line .dot { color: var(--ff-muted); }
+    .hero-desc { color: var(--ff-muted); font-size: 1.0rem; line-height: 1.65; max-width: 33rem; }
+    .hero-platform-note { color: var(--ff-muted); font-size: 0.82rem; }
+    .hero-btn-secondary {
+      background: var(--ff-card);
+      border: 1px solid var(--ff-border);
+      color: var(--ff-dark);
+      transition: all 0.15s ease;
+    }
+    .hero-btn-secondary:hover {
+      background: var(--ff-tab-hover-bg);
+      border-color: #94a3b8;
+      color: var(--ff-dark);
+    }
+    :root[data-theme="dark"] .hero-btn-secondary:hover,
+    [data-bs-theme="dark"] .hero-btn-secondary:hover {
+      background: #27272a;
+      border-color: #4b5563;
+      color: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .hero-btn-secondary:hover {
+        background: #27272a;
+        border-color: #4b5563;
+        color: #ffffff;
+      }
+    }
+
+    /* ---- LAPTOP MOCKUP ---- */
+    .laptop-wrapper {
+      position: relative; width: 100%; max-width: 560px; margin: 0 auto;
+    }
+    .laptop-outer {
+      background: #0b1120;
+      border: 1px solid #1e293b;
+      border-radius: 16px 16px 0 0;
+      padding: 9px 9px 0;
+      box-shadow: 0 32px 64px -16px rgba(15,23,42,0.30), 0 0 0 1px rgba(15,23,42,0.12);
+    }
+    :root[data-theme="dark"] .laptop-outer,
+    [data-bs-theme="dark"] .laptop-outer {
+      background: #18181b;
+      border-color: #27272a;
+      box-shadow: 0 32px 64px -16px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .laptop-outer {
+        background: #18181b;
+        border-color: #27272a;
+        box-shadow: 0 32px 64px -16px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.06);
+      }
+    }
+    .laptop-camera-dot {
+      width: 6px; height: 6px; background: #334155; border-radius: 50%;
+      margin: 0 auto 6px;
+      box-shadow: inset 0 1px 1px rgba(0,0,0,0.6);
+    }
+    .laptop-screen {
+      background: #ffffff; border-radius: 6px 6px 0 0;
+      overflow: hidden; aspect-ratio: 16 / 10;
+      display: block; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+      line-height: 0; position: relative;
+    }
+    :root[data-theme="dark"] .laptop-screen,
+    [data-bs-theme="dark"] .laptop-screen {
+      background: #09090b;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .laptop-screen {
+        background: #09090b;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+      }
+    }
+    .laptop-screen svg {
+      width: 100%; height: 100%; display: block;
+    }
+    .laptop-base {
+      height: 14px;
+      background: linear-gradient(to bottom, #f1f5f9 0%, #cbd5e1 52%, #94a3b8 100%);
+      border-radius: 0 0 20px 20px;
+      margin: 0 -26px;
+      box-shadow: 0 22px 42px -8px rgba(15,23,42,0.22), 0 4px 10px -2px rgba(15,23,42,0.1);
+      position: relative;
+    }
+    :root[data-theme="dark"] .laptop-base,
+    [data-bs-theme="dark"] .laptop-base {
+      background: linear-gradient(to bottom, #3f3f46 0%, #27272a 52%, #18181b 100%);
+      box-shadow: 0 22px 42px -8px rgba(0,0,0,0.45), 0 4px 10px -2px rgba(0,0,0,0.3);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .laptop-base {
+        background: linear-gradient(to bottom, #3f3f46 0%, #27272a 52%, #18181b 100%);
+        box-shadow: 0 22px 42px -8px rgba(0,0,0,0.45), 0 4px 10px -2px rgba(0,0,0,0.3);
+      }
+    }
+    .laptop-base::after {
+      content: '';
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 72px; height: 5px; background: #64748b; border-radius: 0 0 5px 5px;
+    }
+
+    /* Floating callout */
+    .laptop-callout {
+      position: absolute; bottom: 8px; right: -18px;
+      background: var(--ff-card); border: 1px solid var(--ff-border); border-radius: 12px;
+      padding: 0.65rem 0.95rem; box-shadow: 0 12px 28px -4px rgba(15,23,42,0.14), 0 2px 6px -1px rgba(15,23,42,0.06);
+      display: flex; align-items: center; gap: 0.75rem; z-index: 10;
+    }
+    :root[data-theme="dark"] .laptop-callout,
+    [data-bs-theme="dark"] .laptop-callout {
+      box-shadow: 0 12px 28px -4px rgba(0,0,0,0.5), 0 2px 6px -1px rgba(0,0,0,0.4);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .laptop-callout {
+        box-shadow: 0 12px 28px -4px rgba(0,0,0,0.5), 0 2px 6px -1px rgba(0,0,0,0.4);
+      }
+    }
+    .laptop-callout strong { font-size: 0.82rem; color: var(--ff-dark); }
+    .laptop-callout span { font-size: 0.72rem; color: var(--ff-muted); }
+    .callout-db-icon {
+      width: 2.3rem; height: 2.3rem; border-radius: 50%;
+      background: #eff6ff; color: #2563eb;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    :root[data-theme="dark"] .callout-db-icon,
+    [data-bs-theme="dark"] .callout-db-icon {
+      background: rgba(37, 99, 235, 0.2);
+      color: #60a5fa;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .callout-db-icon {
+        background: rgba(37, 99, 235, 0.2);
+        color: #60a5fa;
+      }
+    }
+
+    /* ---- FEATURE STRIP ---- */
+    .feature-strip-card {
+      background: var(--ff-card); border: 1px solid var(--ff-border);
+      border-radius: 1rem; box-shadow: 0 2px 8px -2px rgba(15,23,42,0.05);
+      padding: 1.5rem;
+    }
+    :root[data-theme="dark"] .feature-strip-card,
+    [data-bs-theme="dark"] .feature-strip-card {
+      box-shadow: 0 2px 12px -2px rgba(0,0,0,0.4);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .feature-strip-card {
+        box-shadow: 0 2px 12px -2px rgba(0,0,0,0.4);
+      }
+    }
+    .feature-strip-item { display: flex; align-items: center; gap: 0.85rem; }
+    .feature-icon-bubble {
+      width: 2.6rem; height: 2.6rem; border-radius: 50%;
+      background: #eff6ff; color: var(--ff-primary);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    :root[data-theme="dark"] .feature-icon-bubble,
+    [data-bs-theme="dark"] .feature-icon-bubble {
+      background: rgba(37, 99, 235, 0.2);
+      color: #60a5fa;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .feature-icon-bubble {
+        background: rgba(37, 99, 235, 0.2);
+        color: #60a5fa;
+      }
+    }
+    .feature-strip-title { font-size: 0.9rem; font-weight: 700; color: var(--ff-dark); margin-bottom: 0.08rem; }
+    .feature-strip-desc { font-size: 0.78rem; color: var(--ff-muted); margin-bottom: 0; }
+    .strip-divider-col { border-right: 1px solid var(--ff-border); }
+
+    /* ---- PLATFORM SECTION ---- */
+    .platform-container-card {
+      background: var(--ff-card); border: 1px solid var(--ff-border);
+      border-radius: 1.25rem; box-shadow: 0 8px 28px -8px rgba(15,23,42,0.07);
+      padding: clamp(1.5rem, 3vw, 2.5rem);
+    }
+    :root[data-theme="dark"] .platform-container-card,
+    [data-bs-theme="dark"] .platform-container-card {
+      box-shadow: 0 8px 28px -8px rgba(0,0,0,0.45);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .platform-container-card {
+        box-shadow: 0 8px 28px -8px rgba(0,0,0,0.45);
+      }
+    }
+    .section-icon-badge {
+      width: 2.3rem; height: 2.3rem; background: #eff6ff; color: var(--ff-primary);
+      border-radius: 0.6rem; display: inline-flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    :root[data-theme="dark"] .section-icon-badge,
+    [data-bs-theme="dark"] .section-icon-badge {
+      background: rgba(37, 99, 235, 0.2);
+      color: #60a5fa;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .section-icon-badge {
+        background: rgba(37, 99, 235, 0.2);
+        color: #60a5fa;
+      }
+    }
+
+    /* Platform tab buttons — 4 equal columns */
+    .platform-tabs-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;
+      margin: 1.5rem 0;
+    }
+    @media (max-width: 767px) {
+      .platform-tabs-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 479px) {
+      .platform-tabs-row { grid-template-columns: 1fr 1fr; }
+    }
+    .platform-tab-btn {
+      padding: 0.85rem 0.75rem;
+      background: var(--ff-tab-bg); color: var(--ff-tab-color);
+      border: 1.5px solid transparent; border-radius: 0.85rem;
+      font-weight: 700; font-size: 0.9rem;
+      display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+      transition: all 0.18s ease; cursor: pointer;
+      text-align: left;
+    }
+    .platform-tab-btn:hover { background: var(--ff-tab-hover-bg); color: var(--ff-dark); }
+    .platform-tab-btn.active {
+      background: var(--ff-primary) !important; color: #fff !important;
+      border-color: transparent; box-shadow: 0 4px 14px rgba(37,99,235,0.28);
+    }
+    :root[data-theme="dark"] .platform-tab-btn,
+    [data-bs-theme="dark"] .platform-tab-btn {
+      border-color: var(--ff-border);
+    }
+    :root[data-theme="dark"] .platform-tab-btn:hover,
+    [data-bs-theme="dark"] .platform-tab-btn:hover {
+      border-color: #3f3f46;
+      color: #ffffff;
+    }
+    :root[data-theme="dark"] .platform-tab-btn.active,
+    [data-bs-theme="dark"] .platform-tab-btn.active {
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .platform-tab-btn {
+        border-color: var(--ff-border);
+      }
+      :root:not([data-theme="light"]) .platform-tab-btn:hover {
+        border-color: #3f3f46;
+        color: #ffffff;
+      }
+      :root:not([data-theme="light"]) .platform-tab-btn.active {
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
+      }
+    }
+    .tab-name { display: block; }
+    .tab-sub { display: block; font-size: 0.7rem; font-weight: 500; opacity: 0.8; margin-top: 0.1rem; }
+
+    /* Platform detail cards */
+    .platform-left-card,
+    .platform-right-card {
+      background: var(--ff-card); border: 1px solid var(--ff-border);
+      border-radius: 1rem; padding: 1.75rem; height: 100%;
+    }
+    .platform-left-card {
+      display: flex; flex-direction: column;
+    }
+    .platform-logo-box {
+      width: 3.5rem; height: 3.5rem; border-radius: 0.85rem;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.22);
+    }
+    .dl-btn-primary {
+      background: var(--ff-primary); color: #fff; border: none;
+      border-radius: 0.6rem; padding: 0.85rem 1.1rem;
+      font-weight: 700; font-size: 0.95rem; width: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+      text-decoration: none; transition: background 0.15s;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.2);
+    }
+    .dl-btn-primary:hover { background: var(--ff-primary-hover); color: #fff; }
+    .dl-btn-size {
+      background: rgba(255,255,255,0.22); color: #fff;
+      padding: 0.2rem 0.6rem; border-radius: 0.4rem; font-size: 0.82rem; font-weight: 700;
+    }
+    .dl-btn-secondary {
+      background: var(--ff-card); color: var(--ff-dark); border: 1px solid var(--ff-border);
+      border-radius: 0.55rem; padding: 0.65rem 1rem;
+      font-weight: 600; font-size: 0.85rem; width: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+      text-decoration: none; transition: all 0.15s;
+    }
+    .dl-btn-secondary:hover { border-color: #94a3b8; color: var(--ff-dark); background: var(--ff-card-subtle); }
+    :root[data-theme="dark"] .dl-btn-secondary:hover,
+    [data-bs-theme="dark"] .dl-btn-secondary:hover {
+      border-color: #4b5563;
+      color: #ffffff;
+      background: #27272a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .dl-btn-secondary:hover {
+        border-color: #4b5563;
+        color: #ffffff;
+        background: #27272a;
+      }
+    }
+    .dl-btn-size-sm {
+      background: var(--ff-tab-bg); color: var(--ff-muted);
+      padding: 0.15rem 0.5rem; border-radius: 0.35rem; font-size: 0.78rem; font-weight: 600;
+    }
+    :root[data-theme="dark"] .dl-btn-size-sm,
+    [data-bs-theme="dark"] .dl-btn-size-sm {
+      background: #27272a;
+      color: var(--ff-muted);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .dl-btn-size-sm {
+        background: #27272a;
+        color: var(--ff-muted);
+      }
+    }
+    .req-card {
+      background: var(--ff-card-subtle); border: 1px solid var(--ff-border); border-radius: 0.65rem;
+      padding: 0.9rem 1rem; margin-top: auto;
+    }
+    .req-card-title {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-weight: 700; font-size: 0.85rem; color: var(--ff-dark); margin-bottom: 0.6rem;
+    }
+    .req-list { list-style: none; padding: 0; margin: 0; }
+    .req-list li {
+      display: flex; align-items: flex-start; gap: 0.4rem;
+      font-size: 0.8rem; color: var(--ff-muted); line-height: 1.5; padding-bottom: 0.2rem;
+    }
+    .req-check { color: var(--ff-primary); flex-shrink: 0; margin-top: 0.1rem; }
+
+    /* Step-by-step right card */
+    .step-item {
+      display: flex; gap: 0.9rem; margin-bottom: 1.3rem;
+    }
+    .step-item:last-child { margin-bottom: 0; }
+    .step-badge {
+      width: 1.8rem; height: 1.8rem; background: var(--ff-primary); color: #fff;
+      border-radius: 50%; font-weight: 700; font-size: 0.82rem;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .step-icon-chip {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      background: #eff6ff; color: var(--ff-primary);
+      border-radius: 0.4rem; padding: 0.2rem 0.5rem; font-size: 0.75rem;
+      font-weight: 600; margin-bottom: 0.4rem;
+    }
+    :root[data-theme="dark"] .step-icon-chip,
+    [data-bs-theme="dark"] .step-icon-chip {
+      background: rgba(37, 99, 235, 0.2);
+      color: #60a5fa;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .step-icon-chip {
+        background: rgba(37, 99, 235, 0.2);
+        color: #60a5fa;
+      }
+    }
+    .step-title { font-size: 0.9rem; font-weight: 700; color: var(--ff-dark); margin-bottom: 0.3rem; }
+    .step-desc { font-size: 0.82rem; color: var(--ff-muted); line-height: 1.55; margin-bottom: 0; }
+    .cmd-box {
+      background: #0f172a; color: #e2e8f0;
+      padding: 0.55rem 0.8rem; border-radius: 0.5rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8rem; display: flex; align-items: center;
+      justify-content: space-between; gap: 0.5rem;
+      margin: 0.4rem 0; overflow-x: auto;
+      border: 1px solid transparent;
+    }
+    :root[data-theme="dark"] .cmd-box,
+    [data-bs-theme="dark"] .cmd-box {
+      background: #0d1117;
+      border-color: #27272a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .cmd-box {
+        background: #0d1117;
+        border-color: #27272a;
+      }
+    }
+    .cmd-copy-btn {
+      background: transparent; border: 1px solid #334155; color: #94a3b8;
+      border-radius: 0.3rem; padding: 0.15rem 0.5rem; font-size: 0.7rem;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+    }
+    .cmd-copy-btn:hover { color: #fff; border-color: #64748b; }
+    .step-footnote { font-size: 0.75rem; color: var(--ff-muted); margin-top: 0.3rem; }
+
+    /* ---- ALL DOWNLOADS TABLE ---- */
+    .downloads-table-card {
+      background: var(--ff-card); border: 1px solid var(--ff-border);
+      border-radius: 1.25rem; box-shadow: 0 6px 24px -8px rgba(15,23,42,0.06);
+      padding: clamp(1.5rem, 3vw, 2.5rem);
+    }
+    :root[data-theme="dark"] .downloads-table-card,
+    [data-bs-theme="dark"] .downloads-table-card {
+      box-shadow: 0 6px 24px -8px rgba(0,0,0,0.4);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .downloads-table-card {
+        box-shadow: 0 6px 24px -8px rgba(0,0,0,0.4);
+      }
+    }
+    .tbl-platform-cell {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-weight: 600; font-size: 0.85rem; color: var(--ff-dark);
+    }
+    :root[data-theme="dark"] .download-site .table,
+    [data-bs-theme="dark"] .download-site .table {
+      --bs-table-bg: transparent;
+      --bs-table-color: var(--ff-dark);
+      --bs-table-hover-bg: #1c1c1f;
+      --bs-table-hover-color: #ffffff;
+      --bs-table-border-color: var(--ff-border);
+      color: var(--ff-dark);
+    }
+    :root[data-theme="dark"] .download-site .table thead.table-light,
+    [data-bs-theme="dark"] .download-site .table thead.table-light,
+    :root[data-theme="dark"] .download-site .table thead.table-light th,
+    [data-bs-theme="dark"] .download-site .table thead.table-light th {
+      background-color: #18181b !important;
+      color: var(--ff-muted) !important;
+      border-bottom: 1px solid var(--ff-border) !important;
+    }
+    :root[data-theme="dark"] .download-site .table tbody tr td,
+    [data-bs-theme="dark"] .download-site .table tbody tr td {
+      border-bottom-color: var(--ff-border) !important;
+      color: var(--ff-dark);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .download-site .table {
+        --bs-table-bg: transparent;
+        --bs-table-color: var(--ff-dark);
+        --bs-table-hover-bg: #1c1c1f;
+        --bs-table-hover-color: #ffffff;
+        --bs-table-border-color: var(--ff-border);
+        color: var(--ff-dark);
+      }
+      :root:not([data-theme="light"]) .download-site .table thead.table-light,
+      :root:not([data-theme="light"]) .download-site .table thead.table-light th {
+        background-color: #18181b !important;
+        color: var(--ff-muted) !important;
+        border-bottom: 1px solid var(--ff-border) !important;
+      }
+      :root:not([data-theme="light"]) .download-site .table tbody tr td {
+        border-bottom-color: var(--ff-border) !important;
+        color: var(--ff-dark);
+      }
+    }
+    :root[data-theme="dark"] .download-site .btn-outline-primary,
+    [data-bs-theme="dark"] .download-site .btn-outline-primary {
+      color: #60a5fa;
+      border-color: #3b82f6;
+    }
+    :root[data-theme="dark"] .download-site .btn-outline-primary:hover,
+    [data-bs-theme="dark"] .download-site .btn-outline-primary:hover {
+      background-color: #3b82f6;
+      border-color: #3b82f6;
+      color: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .download-site .btn-outline-primary {
+        color: #60a5fa;
+        border-color: #3b82f6;
+      }
+      :root:not([data-theme="light"]) .download-site .btn-outline-primary:hover {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+        color: #ffffff;
+      }
+    }
+
+    /* ---- WHY FOCUS ---- */
+    .why-focus-card {
+      background: var(--ff-card); border: 1px solid var(--ff-border);
+      border-radius: 0.85rem; padding: 1.1rem 1.25rem; margin-bottom: 0.85rem;
+      display: flex; gap: 0.9rem; align-items: flex-start;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .why-focus-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px -4px rgba(15,23,42,0.07);
+    }
+    :root[data-theme="dark"] .why-focus-card:hover,
+    [data-bs-theme="dark"] .why-focus-card:hover {
+      box-shadow: 0 6px 18px -4px rgba(0, 0, 0, 0.4);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .why-focus-card:hover {
+        box-shadow: 0 6px 18px -4px rgba(0, 0, 0, 0.4);
+      }
+    }
+    .why-icon-circle {
+      width: 2.4rem; height: 2.4rem; border-radius: 50%;
+      background: #eff6ff; color: #2563eb;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    :root[data-theme="dark"] .why-icon-circle,
+    [data-bs-theme="dark"] .why-icon-circle {
+      background: rgba(37, 99, 235, 0.2);
+      color: #60a5fa;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .why-icon-circle {
+        background: rgba(37, 99, 235, 0.2);
+        color: #60a5fa;
+      }
+    }
+
+    /* ---- FAQ ACCORDION ---- */
+    .accordion-ff .accordion-item {
+      background: var(--ff-card); border: 1px solid var(--ff-border) !important;
+      border-radius: 0.75rem !important; margin-bottom: 0.65rem; overflow: hidden;
+    }
+    .accordion-ff .accordion-button {
+      background: var(--ff-card); color: var(--ff-dark);
+      font-weight: 600; font-size: 0.9rem;
+      padding: 1rem 1.2rem; border-radius: 0.75rem !important; box-shadow: none !important;
+    }
+    .accordion-ff .accordion-button:not(.collapsed) {
+      color: var(--ff-primary); background: #eff6ff;
+    }
+    :root[data-theme="dark"] .accordion-ff .accordion-button:not(.collapsed),
+    [data-bs-theme="dark"] .accordion-ff .accordion-button:not(.collapsed) {
+      color: #60a5fa;
+      background: rgba(37, 99, 235, 0.15);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .accordion-ff .accordion-button:not(.collapsed) {
+        color: #60a5fa;
+        background: rgba(37, 99, 235, 0.15);
+      }
+    }
+    .accordion-ff .accordion-button::after {
+      filter: none;
+    }
+    :root[data-theme="dark"] .accordion-ff .accordion-button::after,
+    [data-bs-theme="dark"] .accordion-ff .accordion-button::after {
+      filter: invert(1) brightness(1.5);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .accordion-ff .accordion-button::after {
+        filter: invert(1) brightness(1.5);
+      }
+    }
+    .accordion-ff .accordion-body {
+      padding: 0.85rem 1.2rem 1.1rem; color: #475569; font-size: 0.87rem; line-height: 1.6;
+    }
+    :root[data-theme="dark"] .accordion-ff .accordion-body,
+    [data-bs-theme="dark"] .accordion-ff .accordion-body {
+      color: #cbd5e1;
+      background: var(--ff-card);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .accordion-ff .accordion-body {
+        color: #cbd5e1;
+        background: var(--ff-card);
+      }
+    }
+    :root[data-theme="dark"] kbd,
+    [data-bs-theme="dark"] kbd {
+      background-color: #27272a;
+      color: #f4f4f5;
+      border: 1px solid #3f3f46;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) kbd {
+        background-color: #27272a;
+        color: #f4f4f5;
+        border: 1px solid #3f3f46;
+      }
+    }
+
+    /* ---- FOOTER ---- */
+    .site-footer {
+      background: var(--ff-card); border-top: 1px solid var(--ff-border);
+      padding: 1.75rem 0; color: var(--ff-muted); font-size: 0.85rem;
+    }
+    :root[data-theme="dark"] .site-footer a.text-secondary:hover,
+    [data-bs-theme="dark"] .site-footer a.text-secondary:hover {
+      color: #f4f4f5 !important;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .site-footer a.text-secondary:hover {
+        color: #f4f4f5 !important;
+      }
+    }
+
+    /* ---- UTILITY & GLOBAL DARK OVERRIDES ---- */
+    .platform-view { display: none; }
+    .platform-view.active { display: block; }
+    .rec-note {
+      font-size: 0.75rem; color: var(--ff-muted); display: flex; align-items: center; gap: 0.3rem; margin-top: 0.4rem;
+    }
+    .rec-dot { color: #10b981; font-size: 1rem; line-height: 1; }
+
+    :root[data-theme="dark"] .download-site .text-dark,
+    [data-bs-theme="dark"] .download-site .text-dark {
+      color: var(--ff-dark) !important;
+    }
+    :root[data-theme="dark"] .download-site .text-secondary,
+    [data-bs-theme="dark"] .download-site .text-secondary {
+      color: var(--ff-muted) !important;
+    }
+    :root[data-theme="dark"] .download-site .border,
+    [data-bs-theme="dark"] .download-site .border {
+      border-color: var(--ff-border) !important;
+    }
+    :root[data-theme="dark"] .download-site .badge.bg-light,
+    [data-bs-theme="dark"] .download-site .badge.bg-light {
+      background-color: #27272a !important;
+      color: #a1a1aa !important;
+      border-color: #3f3f46 !important;
+    }
+    :root[data-theme="dark"] .download-site code,
+    [data-bs-theme="dark"] .download-site code {
+      color: #93c5fd;
+      background: #18181b;
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.3rem;
+      border: 1px solid #27272a;
+    }
+    :root[data-theme="dark"] .cmd-box code,
+    [data-bs-theme="dark"] .cmd-box code {
+      color: #e2e8f0;
+      background: transparent;
+      padding: 0;
+      border: none;
+    }
+    :root[data-theme="dark"] .download-site a:not(.btn):not(.nav-pill-active):not(.nav-link-dl):not(.dl-btn-primary):not(.dl-btn-secondary):not(.platform-tab-btn),
+    [data-bs-theme="dark"] .download-site a:not(.btn):not(.nav-pill-active):not(.nav-link-dl):not(.dl-btn-primary):not(.dl-btn-secondary):not(.platform-tab-btn) {
+      color: #60a5fa;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .download-site .text-dark { color: var(--ff-dark) !important; }
+      :root:not([data-theme="light"]) .download-site .text-secondary { color: var(--ff-muted) !important; }
+      :root:not([data-theme="light"]) .download-site .border { border-color: var(--ff-border) !important; }
+      :root:not([data-theme="light"]) .download-site .badge.bg-light {
+        background-color: #27272a !important;
+        color: #a1a1aa !important;
+        border-color: #3f3f46 !important;
+      }
+      :root:not([data-theme="light"]) .download-site code {
+        color: #93c5fd;
+        background: #18181b;
+        padding: 0.15rem 0.35rem;
+        border-radius: 0.3rem;
+        border: 1px solid #27272a;
+      }
+      :root:not([data-theme="light"]) .cmd-box code {
+        color: #e2e8f0;
+        background: transparent;
+        padding: 0;
+        border: none;
+      }
+      :root:not([data-theme="light"]) .download-site a:not(.btn):not(.nav-pill-active):not(.nav-link-dl):not(.dl-btn-primary):not(.dl-btn-secondary):not(.platform-tab-btn) {
+        color: #60a5fa;
+      }
+    }
+  </style>
+</head>
+<body class="download-site">
+
+<!-- ==================== TOP NAV ==================== -->
+<nav class="site-nav py-2">
+  <div class="container-xl d-flex align-items-center justify-content-between gap-3">
+    <a th:href="@{/dashboard}" class="d-flex align-items-center gap-2 text-decoration-none">
+      <span class="brand-mark-square">F</span>
+      <span class="fw-bold text-dark fs-6">Focus Fresh</span>
+      <span class="badge bg-light text-secondary border ms-1" style="font-size:0.72rem;font-weight:600;">v1.0.0</span>
+    </a>
+    <div class="d-flex align-items-center gap-1 gap-sm-2">
+      <a th:href="@{/dashboard}" class="nav-link-dl d-none d-md-inline-block">Home</a>
+      <a href="#platform-picker" class="nav-pill-active">Download</a>
+      <a href="#features" class="nav-link-dl d-none d-sm-inline-block">Features</a>
+      <a href="#faq" class="nav-link-dl d-none d-sm-inline-block">FAQ</a>
+      <a href="https://github.com" target="_blank" rel="noopener" class="nav-link-dl d-inline-flex align-items-center ms-1" title="GitHub">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      </a>
+      <button class="icon-button theme-toggle-btn ms-1" type="button" data-theme-toggle aria-label="Toggle dark theme" title="Toggle dark / light theme">
+        <svg class="theme-icon-light"><use th:href="@{/images/icons.svg#sun}"/></svg>
+        <svg class="theme-icon-dark"><use th:href="@{/images/icons.svg#moon}"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== HERO ==================== -->
+<section class="hero-section">
+  <div class="container-xl">
+    <div class="row align-items-center g-4 g-lg-5">
+
+      <!-- Left: Text -->
+      <div class="col-lg-6">
+        <div class="hero-badge-pill mb-3">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-4.05 11a22.4 22.4 0 0 1-3.95 2z"/></svg>
+          <span>Official Release</span>
+        </div>
+
+        <h1 class="hero-title mb-2">
+          Focus Fresh <span class="ver-blue">v1.0.0</span>
+        </h1>
+
+        <div class="hero-dots-line mb-3">
+          <span>Zero Database Setup</span>
+          <span class="dot mx-2">•</span>
+          <span>100% Private</span>
+          <span class="dot mx-2">•</span>
+          <span>Local First</span>
+        </div>
+
+        <p class="hero-desc mb-4">
+          Get a clean, zero-configuration productivity workspace. Focus bundles its own native PostgreSQL engine and runs completely on your machine with zero external cloud dependencies.
+        </p>
+
+        <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+          <a href="#platform-picker" class="btn btn-primary btn-lg fw-bold px-4 d-inline-flex align-items-center gap-2">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
+            Download Focus Fresh
+          </a>
+          <a href="#features" class="btn btn-outline-secondary hero-btn-secondary btn-lg fw-semibold px-4 d-inline-flex align-items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            View Features
+          </a>
+        </div>
+
+        <div class="hero-platform-note d-flex align-items-center gap-2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+          <span>Available for macOS (Apple Silicon &amp; Intel), Windows 64-bit, and Linux</span>
+        </div>
+      </div>
+
+      <!-- Right: Laptop Mockup -->
+      <div class="col-lg-6 d-flex align-items-center justify-content-center">
+        <div class="laptop-wrapper">
+          <div class="laptop-outer">
+            <div class="laptop-camera-dot"></div>
+            <div class="laptop-screen">
+              <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 1646 896" role="img" aria-label="Focus dark dashboard recreated with editable SVG shapes and text" style="display: block; width: 100%; height: auto;">
+              <defs>
+               <linearGradient id="banner" x2=".8" y2="1"><stop stop-color="#071b3a"/><stop offset=".55" stop-color="#152e58"/><stop offset="1" stop-color="#0c1829"/></linearGradient>
+               <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f4a347"/><stop offset="1" stop-color="#f6d36b"/></linearGradient>
+               <linearGradient id="blue" x2="1" y2="1"><stop stop-color="#121820"/><stop offset="1" stop-color="#193b62"/></linearGradient>
+               <linearGradient id="amber" x2="1" y2="1"><stop stop-color="#171716"/><stop offset="1" stop-color="#493319"/></linearGradient>
+               <linearGradient id="green" x2="1" y2="1"><stop stop-color="#111a18"/><stop offset="1" stop-color="#174634"/></linearGradient>
+               <linearGradient id="red" x2="1" y2="1"><stop stop-color="#1a1518"/><stop offset="1" stop-color="#48242d"/></linearGradient>
+               <clipPath id="heroClip"><rect x="314" y="101" width="765" height="222" rx="21"/></clipPath>
+               <style>text{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;fill:#f0f0f3} .muted{fill:#9b9ba5}.small{font-size:14px}.label{font-size:16px;font-weight:600}.divider{stroke:#29292e;stroke-width:1}.panel{fill:#141416;stroke:#2b2b30;stroke-width:1.2}.nav{fill:#c5d0df;font-size:15px}.caps{fill:#9daec1;font-size:12px;font-weight:700;letter-spacing:1.5px}</style>
+              </defs>
+              <rect width="1646" height="896" fill="#09090b"/>
+              <rect width="277" height="896" fill="#030304"/><path d="M277 0V896" class="divider"/>
+              <rect x="27" y="25" width="42" height="43" rx="10" fill="#2165ed"/><text x="48" y="52" text-anchor="middle" font-size="18" font-weight="800">F</text><text x="82" y="54" font-size="25" font-weight="750">Focus</text>
+              <text x="32" y="136" class="caps">WORKSPACE</text><rect x="18" y="148" width="241" height="48" rx="10" fill="#252528"/>
+              <g class="nav"><text x="33" y="178">▦</text><text x="65" y="178" fill="white" font-weight="600">Dashboard</text><text x="33" y="230">▥</text><text x="65" y="230">Daily board</text><text x="33" y="280">☑</text><text x="65" y="280">Tasks</text><text x="33" y="330">◷</text><text x="65" y="330">Overdue</text><text x="33" y="380">◴</text><text x="65" y="380">History</text></g>
+              <text x="32" y="435" class="caps">INSIGHTS</text><g class="nav"><text x="33" y="475">▥</text><text x="65" y="475">Analytics</text><text x="33" y="525">◇</text><text x="65" y="525">Categories</text><text x="33" y="795">🔗</text><text x="65" y="795">Share app</text><text x="33" y="847">⚙</text><text x="65" y="847">Settings</text></g>
+              <path d="M277 79H1646" class="divider"/><text x="314" y="32" class="muted small">Monday</text><text x="314" y="54" font-size="18" font-weight="650">23 November 2026</text>
+              <rect x="578" y="17" width="752" height="43" rx="15" fill="#141416" stroke="#2a2a2f"/><text x="595" y="45" fill="#a0a0a7" font-size="20">⌕</text><text x="622" y="45" class="muted" font-size="15">Search tasks by name or description...</text><rect x="1277" y="25" width="42" height="29" rx="8" fill="#26262a"/><text x="1298" y="44" text-anchor="middle" class="muted" font-size="12">⌘ K</text>
+              <rect x="1429" y="15" width="48" height="47" rx="9" class="panel"/><text x="1453" y="46" text-anchor="middle" fill="#ffc928" font-size="24">☼</text><rect x="1487" y="17" width="124" height="43" rx="9" fill="#2265ee"/><text x="1504" y="45" font-size="23">＋</text><text x="1530" y="44" class="label">New task</text>
+              <!-- Hero: vector illustration -->
+              <g clip-path="url(#heroClip)"><rect x="314" y="101" width="765" height="222" fill="url(#banner)"/>
+              <ellipse cx="831" cy="277" rx="190" ry="87" fill="#d47942" opacity=".16"/><circle cx="829" cy="284" r="42" fill="url(#sky)"/>
+              <path d="M314 283 Q366 265 406 278 T498 274 T606 268 T707 276 T830 284 T966 273 T1079 280V323H314Z" fill="#0f9bad"/>
+              <path d="M314 301 Q378 283 427 298 T554 287 T681 294 T807 280 T939 295 T1079 279V323H314Z" fill="#08748c"/>
+              <path d="M314 323 Q407 289 492 308 T650 306 T807 312 T965 298 T1079 310V323Z" fill="#05465e"/>
+              <path d="M673 201q15-23 30-6 19-25 40 0 15-12 29 9h-99Z" fill="#7186b4" opacity=".55"/>
+              <path d="M818 177q18-12 31-3 12-19 31-13 5-18 24-18 11-25 37-18 25 4 32 28 17-8 24 11 17-4 27 13Z" fill="#507ab4" opacity=".85"/>
+              <path d="M904 221q17-18 34-7 14-21 30-10 21-5 32 17Z" fill="#6284ba" opacity=".75"/>
+              <path d="M964 323l45-58 18-12 52 36v34Z" fill="#ad744e"/><path d="M1000 323l35-65 18 6 26 25v34Z" fill="#665b5b"/>
+              <g transform="translate(1022 174)"><circle cx="7" cy="4" r="7" fill="#e8a56c"/><path d="M0 0q4-13 17-4l-3 5Z" fill="#13212d"/><path d="M3 14l-10 29 14 7 13-28Z" fill="#f06b26"/><path d="M16 18q25-8 23 19l-19 8-7-22Z" fill="#13a57d"/><path d="M0 47l-9 30 7 2 15-26 5 28 8 0-6-39Z" fill="#132735"/><path d="M-5 76l-13 6 17 1 5-5M19 78l-2 6 17 1-7-7" fill="#11181f"/><path d="M-4 25l-19 16-8-7" fill="none" stroke="#e2a06b" stroke-width="5" stroke-linecap="round"/></g>
+              </g>
+              <text x="346" y="166" font-size="34" font-weight="780">Good Morning, Aswin! 👋</text><text x="347" y="200" font-size="17" fill="#dce6f5">A current view of planned work, progress,</text><text x="347" y="224" font-size="17" fill="#dce6f5">and deadlines.</text>
+              <!-- calendar -->
+              <rect x="1102" y="101" width="509" height="222" rx="21" class="panel"/><rect x="1127" y="126" width="30" height="31" rx="7" fill="#141416" stroke="#303037"/><text x="1142" y="148" text-anchor="middle">‹</text><text x="1356" y="147" text-anchor="middle" font-size="18" font-weight="700">November 2026</text><rect x="1555" y="126" width="30" height="31" rx="7" fill="#141416" stroke="#303037"/><text x="1570" y="148" text-anchor="middle">›</text>
+              <g class="muted small" text-anchor="middle"><text x="1157" y="186">Mon</text><text x="1223" y="186">Tue</text><text x="1290" y="186">Wed</text><text x="1356" y="186">Thu</text><text x="1423" y="186">Fri</text><text x="1489" y="186">Sat</text><text x="1555" y="186">Sun</text></g>
+              <g text-anchor="middle" font-size="17" font-weight="600"><text x="1157" y="223">16</text><text x="1223" y="223">17</text><text x="1290" y="223">18</text><text x="1356" y="223">19</text><text x="1423" y="223">20</text><text x="1489" y="223">21</text><text x="1555" y="223">22</text><text x="1223" y="273">24</text><text x="1290" y="273">25</text><text x="1356" y="273">26</text><text x="1423" y="273">27</text><text x="1489" y="273">28</text><text x="1555" y="273">29</text></g>
+              <rect x="1135" y="245" width="44" height="44" rx="16" fill="#087a4f" stroke="white" stroke-width="2"/><text x="1157" y="273" font-size="17" font-weight="700" text-anchor="middle">23</text><g fill="#24d07c"><circle cx="1356" cy="244" r="3"/><circle cx="1555" cy="244" r="3"/><circle cx="1157" cy="295" r="3"/></g>
+              <!-- stat cards -->
+              <rect x="314" y="346" width="307" height="148" rx="21" fill="url(#blue)" stroke="#3268a4"/><rect x="644" y="346" width="307" height="148" rx="21" fill="url(#amber)" stroke="#986e23"/><rect x="974" y="346" width="306" height="148" rx="21" fill="url(#green)" stroke="#168454"/><rect x="1304" y="346" width="307" height="148" rx="21" fill="url(#red)" stroke="#98465a"/>
+              <g><circle cx="360" cy="392" r="27" fill="#192941"/><text x="360" y="402" font-size="28" fill="#8dbdfc" text-anchor="middle">📋</text><circle cx="690" cy="392" r="27" fill="#302414"/><text x="690" y="402" font-size="28" fill="#ffcf54" text-anchor="middle">⏳</text><circle cx="1020" cy="392" r="27" fill="#0b2a1d"/><text x="1020" y="402" font-size="28" fill="#78efae" text-anchor="middle">✓</text><circle cx="1350" cy="392" r="27" fill="#331a1d"/><text x="1350" y="402" font-size="28" fill="#ffa3a3" text-anchor="middle">⚠</text></g>
+              <g class="label"><text x="402" y="383">Tasks today</text><text x="732" y="383">In progress</text><text x="1062" y="383">Completed</text><text x="1392" y="383">Overdue</text></g><g font-size="36" font-weight="700"><text x="402" y="425">2</text><text x="732" y="425">2</text><text x="1062" y="425">86</text><text x="1392" y="425">3</text></g><g class="muted small"><text x="402" y="453">Planned for the current date</text><text x="732" y="453">Active across all dates</text><text x="1062" y="453">All completed work</text><text x="1392" y="453">Needs a date or status</text><text x="1392" y="472">update</text></g>
+              <!-- Today's work -->
+              <rect x="314" y="517" width="880" height="350" rx="21" class="panel"/><circle cx="364" cy="566" r="27" fill="#19263b"/><text x="364" y="576" font-size="28" text-anchor="middle" fill="#8fc3ff">📋</text><text x="409" y="561" font-size="21" font-weight="750">Today's work</text><text x="409" y="584" class="muted small">Tasks currently planned for today.</text><rect x="1033" y="545" width="138" height="42" rx="9" fill="#141416" stroke="#303037"/><text x="1102" y="571" text-anchor="middle" class="label">View board →</text>
+              <rect x="337" y="627" width="97" height="36" rx="18" fill="#2866f0"/><text x="385" y="650" text-anchor="middle" class="small" font-weight="650">All  (2)</text>
+              <g fill="#141416" stroke="#303037"><rect x="444" y="627" width="117" height="36" rx="18"/><rect x="571" y="627" width="110" height="36" rx="18"/><rect x="691" y="627" width="148" height="36" rx="18"/><rect x="849" y="627" width="150" height="36" rx="18"/><rect x="1009" y="627" width="106" height="36" rx="18"/></g><g class="muted small" text-anchor="middle" font-weight="600"><text x="502" y="650">Inbox  (0)</text><text x="626" y="650">Now  (2)</text><text x="765" y="650">Tomorrow  (0)</text><text x="924" y="650">Next week  (0)</text><text x="1062" y="650">Custom</text></g>
+              <path d="M314 676H1194" class="divider"/><path d="M337 752H1171" class="divider"/>
+              <g fill="none" stroke="#44444c" stroke-width="2"><rect x="345" y="700" width="22" height="22" rx="6"/><rect x="345" y="774" width="22" height="22" rx="6"/></g>
+              <g class="label"><text x="379" y="717">Learn Mickey framework</text><text x="379" y="791">Create Agent</text></g><circle cx="383" cy="734" r="4" fill="#2866f0"/><circle cx="383" cy="808" r="4" fill="#2866f0"/><g class="muted small"><text x="392" y="738">Daily Tasks</text><text x="392" y="812">Daily Tasks</text><text x="886" y="717">Due 20 Nov</text><text x="886" y="791">Due 29 Sep</text></g><rect x="1019" y="702" width="89" height="28" rx="14" fill="#141b2a" stroke="#273655"/><rect x="1019" y="776" width="89" height="28" rx="14" fill="#141b2a" stroke="#273655"/><g fill="#9ccaff" font-size="13" font-weight="600"><text x="1063" y="720" text-anchor="middle">In progress</text><text x="1063" y="794" text-anchor="middle">In progress</text></g><text x="1147" y="720" class="muted">›</text><text x="1147" y="794" class="muted">›</text>
+              <!-- right panels -->
+              <rect x="1213" y="517" width="398" height="186" rx="21" fill="url(#green)" stroke="#2b2b30"/><circle cx="1263" cy="566" r="27" fill="#0b291b"/><text x="1263" y="576" font-size="31" fill="#68ee9e" text-anchor="middle">◎</text><text x="1308" y="561" font-size="21" font-weight="700">Completion rate</text><text x="1308" y="584" class="muted small">Completed share of all tasks.</text><text x="1585" y="574" font-size="27" font-weight="750" text-anchor="end">97%</text><rect x="1236" y="643" width="223" height="14" rx="7" fill="#263d35"/><rect x="1236" y="643" width="217" height="14" rx="7" fill="#0edc89"/>
+              <g fill="#83d0ae"><rect x="1495" y="661" width="12" height="15" rx="2"/><rect x="1514" y="652" width="12" height="24" rx="2"/><rect x="1534" y="641" width="12" height="35" rx="2"/><rect x="1554" y="629" width="12" height="47" rx="2"/></g><path d="M1484 677h95M1491 654l24-19 22 6 26-22m-10 0h10v10" fill="none" stroke="#35b98b" stroke-width="3"/>
+              <rect x="1213" y="718" width="398" height="150" rx="21" class="panel"/><circle cx="1263" cy="762" r="24" fill="#33191c"/><text x="1263" y="771" text-anchor="middle" font-size="24" fill="#ff9b9b">⚠</text><text x="1304" y="756" font-size="20" font-weight="700">Overdue</text><text x="1304" y="778" class="muted small">Oldest deadlines first.</text><rect x="1505" y="743" width="86" height="36" rx="9" fill="#141416" stroke="#303037"/><text x="1548" y="766" text-anchor="middle" class="label">View all</text><path d="M1236 800H1587" class="divider"/><text x="1236" y="830" class="label">Create Agent</text><text x="1236" y="852" font-size="13" fill="#ff4759">55 days overdue</text><text x="1575" y="842" fill="#2866f0" font-size="22">›</text>
+              </svg>
+            </div>
+          </div>
+          <div class="laptop-base"></div>
+
+          <!-- Floating callout -->
+          <div class="laptop-callout">
+            <div class="callout-db-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            </div>
+            <div>
+              <strong class="d-block">Bundled PostgreSQL</strong>
+              <span>(No setup required)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FEATURE STRIP ==================== -->
+<section class="container-xl py-4 pb-5" id="features">
+  <div class="feature-strip-card">
+    <div class="row g-3 align-items-stretch">
+      <div class="col-sm-6 col-lg-3 strip-divider-col">
+        <div class="feature-strip-item">
+          <div class="feature-icon-bubble">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+          </div>
+          <div>
+            <div class="feature-strip-title">100% Local &amp; Private</div>
+            <p class="feature-strip-desc">Your data never leaves your device</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3 strip-divider-col">
+        <div class="feature-strip-item">
+          <div class="feature-icon-bubble">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          </div>
+          <div>
+            <div class="feature-strip-title">Bundled Native PostgreSQL</div>
+            <p class="feature-strip-desc">Runs out of the box on port 5433</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3 strip-divider-col">
+        <div class="feature-strip-item">
+          <div class="feature-icon-bubble">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <div>
+            <div class="feature-strip-title">Kanban Board &amp; Timers</div>
+            <p class="feature-strip-desc">Plan, track, and complete work</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="feature-strip-item">
+          <div class="feature-icon-bubble">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div>
+            <div class="feature-strip-title">Local Files &amp; Exports</div>
+            <p class="feature-strip-desc">Attach files, export CSV, and full backups</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CHOOSE YOUR PLATFORM ==================== -->
+<section class="container-xl pb-5" id="platform-picker">
+  <div class="platform-container-card">
+
+    <!-- Heading -->
+    <div class="d-flex align-items-center gap-3 mb-1">
+      <span class="section-icon-badge">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
+      </span>
+      <div>
+        <h2 class="fs-4 fw-bold text-dark mb-0">Choose Your Platform</h2>
+        <p class="text-secondary small mb-0">Download Focus Fresh for your operating system and get started in minutes.</p>
+      </div>
+    </div>
+
+    <!-- Tab buttons -->
+    <div class="platform-tabs-row">
+      <!-- macOS -->
+      <button type="button" class="platform-tab-btn" id="tabBtnMac" onclick="switchPlatform('mac')">
+        <svg width="20" height="20" viewBox="0 0 814 1000" fill="currentColor">
+          <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105.7-57.5-155.5-127.4C46 790.2 0 663.1 0 541.8 0 347.4 108.1 243.7 215.2 243.7c60.3 0 110.6 42.1 147.6 42.1 35.5 0 91.1-44.6 157.1-44.6 25.2 0 109.5 2.6 166.4 98.3zm-170-128.4c-9.3-56.3-39.5-115.8-77.6-153.3-29.4-27.9-85.2-61.7-134.3-61.7-2 0-4 .2-6 .5 2.1 54.9 30.9 110.3 67.8 148.2 36.2 37.2 90.3 68.5 150.1 66.3z"/>
+        </svg>
+        <div>
+          <span class="tab-name">macOS</span>
+          <span class="tab-sub">Apple Silicon &amp; Intel</span>
+        </div>
+      </button>
+
+      <!-- Windows -->
+      <button type="button" class="platform-tab-btn" id="tabBtnWin" onclick="switchPlatform('win')">
+        <svg width="20" height="20" viewBox="0 0 88 88" fill="currentColor">
+          <path d="M0 12.4L35.7 7.6V42H0zM40.3 6.9L88 0v42H40.3zM0 46h35.7v34.4L0 75.6zM40.3 46H88V88L40.3 81.1z"/>
+        </svg>
+        <div>
+          <span class="tab-name">Windows</span>
+          <span class="tab-sub">64-bit</span>
+        </div>
+      </button>
+
+      <!-- Linux -->
+      <button type="button" class="platform-tab-btn" id="tabBtnLinux" onclick="switchPlatform('linux')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        <div>
+          <span class="tab-name">Linux</span>
+          <span class="tab-sub">Universal (JAR / CLI)</span>
+        </div>
+      </button>
+
+      <!-- All Packages -->
+      <button type="button" class="platform-tab-btn" id="tabBtnAll" onclick="switchPlatform('all')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        <div>
+          <span class="tab-name">All Packages</span>
+          <span class="tab-sub">View complete downloads</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- ===== macOS VIEW ===== -->
+    <div id="platformViewMac" class="platform-view">
+      <div class="row g-4 align-items-stretch">
+
+        <!-- Left: Download card -->
+        <div class="col-lg-5">
+          <div class="platform-left-card">
+            <div class="platform-logo-box" style="background: transparent; box-shadow: none; padding: 0; width: 56px; height: 56px; margin-bottom: 1.2rem;">
+              <!-- macOS Finder Icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="56" height="56" style="display: block;">
+                <defs>
+                  <linearGradient id="finderLeft" x2="0" y2="1">
+                    <stop stop-color="#75C7FF"/>
+                    <stop offset="1" stop-color="#2585E9"/>
+                  </linearGradient>
+                  <linearGradient id="finderRight" x2="0" y2="1">
+                    <stop stop-color="#D3F2FF"/>
+                    <stop offset="1" stop-color="#86C5F9"/>
+                  </linearGradient>
+                  <clipPath id="finderClip">
+                    <rect x="5" y="5" width="90" height="90" rx="19"/>
+                  </clipPath>
+                </defs>
+                <g clip-path="url(#finderClip)">
+                  <rect x="5" y="5" width="90" height="90" fill="url(#finderRight)"/>
+                  <path d="M5 5H55L39 54L54 95H5Z" fill="url(#finderLeft)"/>
+                  <path d="M55 5L39 54L54 95" fill="none" stroke="#2475B9" opacity=".5"/>
+                  <path d="M28 34V45M70 34V45" stroke="#123F75" stroke-width="4" stroke-linecap="round"/>
+                  <path d="M26 66Q50 86 74 65" fill="none" stroke="#123F75" stroke-width="4" stroke-linecap="round"/>
+                </g>
+              </svg>
+            </div>
+            <h3 class="fs-5 fw-bold text-dark mb-1">Focus for macOS</h3>
+            <p class="text-secondary small mb-4">Native macOS application bundle with integrated PostgreSQL runtime. Features 1-Click automated installation, prior installation cleanup, auto-starting background service, and zero manual terminal commands.</p>
+
+            <a th:href="@{/download/file/mac-dmg}" class="dl-btn-primary mb-1">
+              <span class="d-inline-flex align-items-center gap-2">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
+                Download DMG Installer
+              </span>
+              <span class="dl-btn-size">134 MB</span>
+            </a>
+            <div class="rec-note mb-3">
+              <span class="rec-dot">●</span> Recommended for macOS — 1-Click Automated Installer
+            </div>
+
+            <a th:href="@{/download/file/mac-zip}" class="dl-btn-secondary mb-4">
+              <span class="d-inline-flex align-items-center gap-2">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Standalone Focus.app Archive (.zip)
+              </span>
+              <span class="dl-btn-size-sm">128 MB</span>
+            </a>
+
+            <div class="req-card">
+              <div class="req-card-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                System Requirements
+              </div>
+              <ul class="req-list">
+                <li><svg class="req-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> macOS Big Sur (11.0) or newer</li>
+                <li><svg class="req-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Apple Silicon (M1, M2, M3, M4) or Intel Core i5/i7/i9</li>
+                <li><svg class="req-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Zero Java or database installation required (bundled)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Steps -->
+        <div class="col-lg-7">
+          <div class="platform-right-card">
+            <h4 class="fs-5 fw-bold text-dark mb-4">Step-by-Step macOS Setup Instructions</h4>
+
+            <div class="step-item">
+              <div class="step-badge">1</div>
+              <div class="flex-grow-1">
+                <div class="step-icon-chip">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  1-Click Auto Install
+                </div>
+                <div class="step-title">Mount the DMG &amp; Double-Click "Install Focus"</div>
+                <p class="step-desc">Double-click <code>Focus-1.0.0.dmg</code>. In the opened DMG window, double-click <strong>Install Focus</strong>. If a previous version exists, it prompts to delete it and start a clean fresh install. It copies Focus to <code>/Applications</code> and automatically configures and starts the background service.</p>
+                <p class="step-desc text-muted mb-0" style="font-size:0.8rem;"><em>Alternative:</em> You can also drag <strong>Focus.app</strong> into Applications — launching it will automatically self-register and start the background service without any terminal commands.</p>
+              </div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-badge">2</div>
+              <div class="flex-grow-1">
+                <div class="step-icon-chip">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Auto Launch
+                </div>
+                <div class="step-title">Automatic Startup &amp; Browser Dashboard</div>
+                <p class="step-desc">Focus boots its bundled PostgreSQL engine automatically (port 5433) and opens <a href="http://localhost:8484" target="_blank" rel="noopener">http://localhost:8484</a> in your default browser. Your personal dashboard is ready immediately.</p>
+              </div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-badge">3</div>
+              <div class="flex-grow-1">
+                <div class="step-icon-chip">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  Gatekeeper
+                </div>
+                <div class="step-title">Gatekeeper Verification ("Apple could not verify...")</div>
+                <p class="step-desc mb-2">If macOS blocks double-clicking with <em>"Focus Not Opened — Apple could not verify Focus is free of malware"</em>, approve it in two quick clicks:</p>
+                <div class="p-2 mb-2 rounded bg-light border" style="font-size:0.83rem; line-height:1.45;">
+                  <strong>GUI method (No Terminal):</strong> Go to <strong>System Settings &gt; Privacy &amp; Security</strong>, scroll down to <strong>Security</strong>, and click <strong>Open Anyway</strong> next to Focus.
+                </div>
+                <p class="step-desc mb-1" style="font-size:0.8rem;"><em>Or run this one-line command in Terminal to unblock permanently:</em></p>
+                <div class="cmd-box">
+                  <code>xattr -cr /Applications/Focus.app</code>
+                  <button class="cmd-copy-btn" onclick="copySnippetText(this,'xattr -cr /Applications/Focus.app')">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-badge">4</div>
+              <div class="flex-grow-1">
+                <div class="step-icon-chip">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4"/></svg>
+                  Background Service
+                </div>
+                <div class="step-title">Automatic Background Service (Zero Commands Needed)</div>
+                <p class="step-desc mb-1">The background service (<code>com.productivity.focus</code>) runs silently in the background and auto-starts on login with zero terminal configuration. To inspect or manage via CLI (optional):</p>
+                <div class="cmd-box">
+                  <code>./bin/mac/focus status</code>
+                  <button class="cmd-copy-btn" onclick="copySnippetText(this,'./bin/mac/focus status')">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    Copy
+                  </button>
+                </div>
+                <p class="step-footnote">To stop: <code>./bin/mac/focus stop</code> | To start: <code>./bin/mac/focus start</code> | To uninstall: <code>./bin/mac/uninstall-service.sh</code></p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== WINDOWS VIEW ===== -->
+    <div id="platformViewWin" class="platform-view">
+      <div class="row g-4 align-items-stretch">
+        <div class="col-lg-5">
+          <div class="platform-left-card">
+            <div class="platform-logo-box" style="background:linear-gradient(135deg,#0ea5e9,#0369a1);">
+              <svg width="28" height="28" viewBox="0 0 88 88" fill="currentColor"><path d="M0 12.4L35.7 7.6V42H0zM40.3 6.9L88 0v42H40.3zM0 46h35.7v34.4L0 75.6zM40.3 46H88V88L40.3 81.1z"/></svg>
+            </div>
+            <h3 class="fs-5 fw-bold text-dark mb-1">Focus for Windows</h3>
+            <p class="text-secondary small mb-4">Native 64-bit Windows distribution with automated Setup installer, prior version cleanup, auto-starting background service, and desktop shortcuts.</p>
+
+            <a th:href="@{/download/file/win-setup}" class="dl-btn-primary mb-1">
+              <span class="d-inline-flex align-items-center gap-2">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
+                Download Setup Installer (.exe)
+              </span>
+              <span class="dl-btn-size">88.5 MB</span>
+            </a>
+            <div class="rec-note mb-3"><span class="rec-dot">●</span> Recommended for Windows — 1-Click Automated Setup</div>
+
+            <div class="d-flex flex-column gap-2 mb-4">
+              <a th:href="@{/download/file/win-zip}" class="dl-btn-secondary">
+                <span class="d-inline-flex align-items-center gap-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  Windows Portable Distribution (.zip)
+                </span>
+                <span class="dl-btn-size-sm">88.5 MB</span>
+              </a>
+              <a th:href="@{/download/file/win-exe}" class="dl-btn-secondary">
+                <span class="d-inline-flex align-items-center gap-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Focus Silent GUI Launcher (Focus.exe)
+                </span>
+                <span class="dl-btn-size-sm">2.5 KB</span>
+              </a>
+              <a th:href="@{/download/file/win-console}" class="dl-btn-secondary">
+                <span class="d-inline-flex align-items-center gap-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                  Focus Console Launcher (.exe)
+                </span>
+                <span class="dl-btn-size-sm">2.5 KB</span>
+              </a>
+            </div>
+
+            <div class="req-card">
+              <div class="req-card-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4"/></svg>
+                System Requirements
+              </div>
+              <ul class="req-list">
+                <li><svg class="req-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 64-bit Windows 10 or Windows 11</li>
+                <li><svg class="req-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Java 17+ (or bundled portable runtime)</li>
+                <li><svg class="req-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> No external database needed (embedded PostgreSQL)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="platform-right-card">
+            <h4 class="fs-5 fw-bold text-dark mb-4">Step-by-Step Windows Setup Instructions</h4>
+
+            <div class="step-item">
+              <div class="step-badge">1</div>
+              <div class="flex-grow-1">
+                <div class="step-icon-chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> 1-Click Setup</div>
+                <div class="step-title">Run Focus-1.0.0-Setup.exe</div>
+                <p class="step-desc">Double-click <code>Focus-1.0.0-Setup.exe</code>. If a previous version of Focus is detected, the installer will prompt to cleanly delete it and start a fresh installation.</p>
+              </div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-badge">2</div>
+              <div class="flex-grow-1">
+                <div class="step-icon-chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Automated Setup</div>
+                <div class="step-title">Zero-Configuration Installation &amp; Shortcuts</div>
+                <p class="step-desc">The installer deploys application files, creates Start Menu and Desktop shortcuts, and registers an uninstaller in Windows Apps &amp; Features.</p>
+              </div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-badge">3</div>
+              <div class="flex-grow-1">
+                <div class="step-icon-chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Auto Service</div>
+                <div class="step-title">Automatic Background Service &amp; Dashboard Launch</div>
+                <p class="step-desc">The installer automatically configures and starts the <code>FocusProductivityTracker</code> scheduled task service on port 8484 and opens <a href="http://localhost:8484" target="_blank" rel="noopener">http://localhost:8484</a> in your default browser. Zero PowerShell or command prompt steps required!</p>
+              </div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-badge">4</div>
+              <div class="flex-grow-1">
+                <div class="step-icon-chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82"/></svg> Management</div>
+                <div class="step-title">Service Control &amp; Uninstall (Optional)</div>
+                <p class="step-desc mb-1">Focus runs silently in the background on startup. To inspect status, stop, or manage via command line:</p>
+                <div class="cmd-box">
+                  <code>.\bin\win\focus.bat status</code>
+                  <button class="cmd-copy-btn" onclick="copySnippetText(this,'.\\bin\\win\\focus.bat status')">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    Copy
+                  </button>
+                </div>
+                <p class="step-footnote">To stop: <code>.\bin\win\focus.bat stop</code> | To uninstall: Windows Settings &gt; Apps or <code>.\bin\win\uninstall.bat</code></p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LINUX VIEW ===== -->
+    <div id="platformViewLinux" class="platform-view">
+      <div class="row g-4 align-items-stretch">
+        <div class="col-lg-5">
+          <div class="platform-left-card">
+            <div class="platform-logo-box" style="background:linear-gradient(135deg,#475569,#1e293b);">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            </div>
+            <h3 class="fs-5 fw-bold text-dark mb-1">Focus for Linux</h3>
+            <p class="text-secondary small mb-4">Universal executable Spring Boot fat JAR with native embedded PostgreSQL. Run standalone or manage via systemd.</p>
+
+            <a th:href="@{/download/file/jar}" class="dl-btn-primary mb-1">
+              <span class="d-inline-flex align-items-center gap-2">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
+                Download Executable JAR
+              </span>
+              <span class="dl-btn-size">91.9 MB</span>
+            </a>
+            <div class="rec-note mb-3"><span class="rec-dot">●</span> Universal for all Linux distributions</div>
+
+            <a th:href="@{/download/file/linux-cli}" class="dl-btn-secondary mb-4">
+              <span class="d-inline-flex align-items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                Linux CLI Controller (focus)
+              </span>
+              <span class="dl-btn-size-sm">5.4 KB</span>
+            </a>
+
+            <div class="req-card">
+              <div class="req-card-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82"/></svg>
+                System Requirements
+              </div>
+              <ul class="req-list">
+                <li><svg class="req-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> JDK 17 or JRE 17+ (OpenJDK 17 recommended)</li>
+                <li><svg class="req-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Ubuntu, Debian, Fedora, Arch, CentOS, RHEL</li>
+                <li><svg class="req-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> No external database setup needed</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="platform-right-card">
+            <h4 class="fs-5 fw-bold text-dark mb-4">Step-by-Step Linux Setup Instructions</h4>
+
+            <div class="step-item">
+              <div class="step-badge">1</div>
+              <div class="flex-grow-1">
+                <div class="step-icon-chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg> Java</div>
+                <div class="step-title">Verify or Install Java 17</div>
+                <p class="step-desc mb-1">Ensure Java 17 is available on your machine:</p>
+                <div class="cmd-box">
+                  <code>java -version</code>
+                  <button class="cmd-copy-btn" onclick="copySnippetText(this,'java -version')">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    Copy
+                  </button>
+                </div>
+                <p class="step-footnote">On Ubuntu/Debian: <code>sudo apt install openjdk-17-jre</code></p>
+              </div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-badge">2</div>
+              <div class="flex-grow-1">
+                <div class="step-icon-chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Launch</div>
+                <div class="step-title">Launch Focus Standalone</div>
+                <p class="step-desc mb-1">Launch the executable Spring Boot fat JAR:</p>
+                <div class="cmd-box">
+                  <code>java -jar focus.jar</code>
+                  <button class="cmd-copy-btn" onclick="copySnippetText(this,'java -jar focus.jar')">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    Copy
+                  </button>
+                </div>
+                <p class="step-footnote">Or using CLI: <code>chmod +x focus &amp;&amp; ./focus start</code></p>
+              </div>
+            </div>
+
+            <div class="step-item">
+              <div class="step-badge">3</div>
+              <div class="flex-grow-1">
+                <div class="step-icon-chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82"/></svg> Service</div>
+                <div class="step-title">Optional: Install systemd Service</div>
+                <p class="step-desc mb-1">To run Focus automatically as a systemd user daemon:</p>
+                <div class="cmd-box">
+                  <code>./bin/linux/install-service.sh --user</code>
+                  <button class="cmd-copy-btn" onclick="copySnippetText(this,'./bin/linux/install-service.sh --user')">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    Copy
+                  </button>
+                </div>
+                <p class="step-footnote">Manage: <code>systemctl --user status focus</code> | <code>systemctl --user stop focus</code></p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ==================== ALL RELEASE DOWNLOADS ==================== -->
+<section class="container-xl pb-5" id="all-downloads-section">
+  <div class="downloads-table-card">
+    <div class="d-flex align-items-center gap-3 mb-1">
+      <span class="section-icon-badge">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
+      </span>
+      <div>
+        <h2 class="fs-4 fw-bold text-dark mb-0">All Release Downloads</h2>
+        <p class="text-secondary small mb-0">Complete package directory for Focus v1.0.0.</p>
+      </div>
+    </div>
+
+    <div class="table-responsive mt-4">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:13%;">Platform</th>
+            <th style="width:34%;">Package</th>
+            <th style="width:24%;">Filename</th>
+            <th style="width:13%;">Size</th>
+            <th style="width:16%;" class="text-end">Download</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- macOS DMG -->
+          <tr>
+            <td>
+              <span class="tbl-platform-cell">
+                <svg width="14" height="14" viewBox="0 0 814 1000" fill="currentColor"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105.7-57.5-155.5-127.4C46 790.2 0 663.1 0 541.8 0 347.4 108.1 243.7 215.2 243.7c60.3 0 110.6 42.1 147.6 42.1 35.5 0 91.1-44.6 157.1-44.6 25.2 0 109.5 2.6 166.4 98.3zm-170-128.4c-9.3-56.3-39.5-115.8-77.6-153.3-29.4-27.9-85.2-61.7-134.3-61.7-2 0-4 .2-6 .5 2.1 54.9 30.9 110.3 67.8 148.2 36.2 37.2 90.3 68.5 150.1 66.3z"/></svg>
+                macOS
+              </span>
+            </td>
+            <td>
+              <strong class="d-block small text-dark">Focus Native Disk Image Installer</strong>
+              <span class="text-secondary" style="font-size:0.76rem;">Native macOS installer with embedded runtime and launcher.</span>
+            </td>
+            <td><code class="small">Focus-1.0.0.dmg</code></td>
+            <td><span class="badge bg-light text-secondary border">134.3 MB</span></td>
+            <td class="text-end">
+              <a class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 px-3" th:href="@{/download/file/mac-dmg}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Download
+              </a>
+            </td>
+          </tr>
+          <!-- macOS ZIP -->
+          <tr>
+            <td>
+              <span class="tbl-platform-cell">
+                <svg width="14" height="14" viewBox="0 0 814 1000" fill="currentColor"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105.7-57.5-155.5-127.4C46 790.2 0 663.1 0 541.8 0 347.4 108.1 243.7 215.2 243.7c60.3 0 110.6 42.1 147.6 42.1 35.5 0 91.1-44.6 157.1-44.6 25.2 0 109.5 2.6 166.4 98.3zm-170-128.4c-9.3-56.3-39.5-115.8-77.6-153.3-29.4-27.9-85.2-61.7-134.3-61.7-2 0-4 .2-6 .5 2.1 54.9 30.9 110.3 67.8 148.2 36.2 37.2 90.3 68.5 150.1 66.3z"/></svg>
+                macOS
+              </span>
+            </td>
+            <td>
+              <strong class="d-block small text-dark">Standalone Focus.app Bundle Archive</strong>
+              <span class="text-secondary" style="font-size:0.76rem;">Portable zip containing the pre-packaged Focus.app.</span>
+            </td>
+            <td><code class="small">Focus-1.0.0-macOS.zip</code></td>
+            <td><span class="badge bg-light text-secondary border">128.2 MB</span></td>
+            <td class="text-end">
+              <a class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 px-3" th:href="@{/download/file/mac-zip}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Download
+              </a>
+            </td>
+          </tr>
+          <!-- Windows Automated Setup EXE -->
+          <tr>
+            <td>
+              <span class="tbl-platform-cell">
+                <svg width="14" height="14" viewBox="0 0 88 88" fill="currentColor"><path d="M0 12.4L35.7 7.6V42H0zM40.3 6.9L88 0v42H40.3zM0 46h35.7v34.4L0 75.6zM40.3 46H88V88L40.3 81.1z"/></svg>
+                Windows
+              </span>
+            </td>
+            <td>
+              <strong class="d-block small text-dark">Focus Automated Setup Installer (.exe)</strong>
+              <span class="text-secondary" style="font-size:0.76rem;">1-Click GUI setup with clean fresh-install prompt, shortcuts, and auto background service.</span>
+            </td>
+            <td><code class="small">Focus-1.0.0-Setup.exe</code></td>
+            <td><span class="badge bg-light text-secondary border">88.5 MB</span></td>
+            <td class="text-end">
+              <a class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 px-3" th:href="@{/download/file/win-setup}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Download
+              </a>
+            </td>
+          </tr>
+          <!-- Windows ZIP -->
+          <tr>
+            <td>
+              <span class="tbl-platform-cell">
+                <svg width="14" height="14" viewBox="0 0 88 88" fill="currentColor"><path d="M0 12.4L35.7 7.6V42H0zM40.3 6.9L88 0v42H40.3zM0 46h35.7v34.4L0 75.6zM40.3 46H88V88L40.3 81.1z"/></svg>
+                Windows
+              </span>
+            </td>
+            <td>
+              <strong class="d-block small text-dark">Focus Windows Portable Distribution</strong>
+              <span class="text-secondary" style="font-size:0.76rem;">Complete portable package with Focus.exe, Focus-Console.exe, and tools.</span>
+            </td>
+            <td><code class="small">Focus-1.0.0-Windows.zip</code></td>
+            <td><span class="badge bg-light text-secondary border">88.5 MB</span></td>
+            <td class="text-end">
+              <a class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 px-3" th:href="@{/download/file/win-zip}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Download
+              </a>
+            </td>
+          </tr>
+          <!-- Windows EXE -->
+          <tr>
+            <td>
+              <span class="tbl-platform-cell">
+                <svg width="14" height="14" viewBox="0 0 88 88" fill="currentColor"><path d="M0 12.4L35.7 7.6V42H0zM40.3 6.9L88 0v42H40.3zM0 46h35.7v34.4L0 75.6zM40.3 46H88V88L40.3 81.1z"/></svg>
+                Windows
+              </span>
+            </td>
+            <td>
+              <strong class="d-block small text-dark">Focus Silent GUI Launcher</strong>
+              <span class="text-secondary" style="font-size:0.76rem;">Native 64-bit launcher that boots Focus silently and opens your browser.</span>
+            </td>
+            <td><code class="small">Focus.exe</code></td>
+            <td><span class="badge bg-light text-secondary border">2.5 KB</span></td>
+            <td class="text-end">
+              <a class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 px-3" th:href="@{/download/file/win-exe}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Download
+              </a>
+            </td>
+          </tr>
+          <!-- Windows Console EXE -->
+          <tr>
+            <td>
+              <span class="tbl-platform-cell">
+                <svg width="14" height="14" viewBox="0 0 88 88" fill="currentColor"><path d="M0 12.4L35.7 7.6V42H0zM40.3 6.9L88 0v42H40.3zM0 46h35.7v34.4L0 75.6zM40.3 46H88V88L40.3 81.1z"/></svg>
+                Windows
+              </span>
+            </td>
+            <td>
+              <strong class="d-block small text-dark">Focus Console Launcher</strong>
+              <span class="text-secondary" style="font-size:0.76rem;">Console executable with real-time log output.</span>
+            </td>
+            <td><code class="small">Focus-Console.exe</code></td>
+            <td><span class="badge bg-light text-secondary border">2.5 KB</span></td>
+            <td class="text-end">
+              <a class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 px-3" th:href="@{/download/file/win-console}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Download
+              </a>
+            </td>
+          </tr>
+          <!-- Linux JAR -->
+          <tr>
+            <td>
+              <span class="tbl-platform-cell">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                Linux
+              </span>
+            </td>
+            <td>
+              <strong class="d-block small text-dark">Universal Executable Spring Boot JAR</strong>
+              <span class="text-secondary" style="font-size:0.76rem;">Standalone executable JAR with embedded PostgreSQL.</span>
+            </td>
+            <td><code class="small">focus.jar</code></td>
+            <td><span class="badge bg-light text-secondary border">91.9 MB</span></td>
+            <td class="text-end">
+              <a class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 px-3" th:href="@{/download/file/jar}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Download
+              </a>
+            </td>
+          </tr>
+          <!-- Linux CLI -->
+          <tr>
+            <td>
+              <span class="tbl-platform-cell">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                Linux
+              </span>
+            </td>
+            <td>
+              <strong class="d-block small text-dark">Linux CLI Controller</strong>
+              <span class="text-secondary" style="font-size:0.76rem;">Command-line controller for start, stop, status, logs, and systemd.</span>
+            </td>
+            <td><code class="small">focus</code></td>
+            <td><span class="badge bg-light text-secondary border">5.4 KB</span></td>
+            <td class="text-end">
+              <a class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 px-3" th:href="@{/download/file/linux-cli}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Download
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== WHY FOCUS + FAQ ==================== -->
+<section class="container-xl pb-5" id="faq">
+  <div class="row g-4 g-lg-5">
+
+    <!-- Left: Why Focus -->
+    <div class="col-lg-6">
+      <div class="d-flex align-items-center gap-3 mb-1">
+        <span class="section-icon-badge">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        </span>
+        <div>
+          <h2 class="fs-4 fw-bold text-dark mb-0">Why Focus?</h2>
+          <p class="text-secondary small mb-0">Designed for professionals who value focus, high performance, and complete data privacy.</p>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <div class="why-focus-card">
+          <div class="why-icon-circle">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          </div>
+          <div>
+            <strong class="d-block text-dark fw-bold mb-1" style="font-size:0.9rem;">Zero Database Setup</strong>
+            <p class="small text-secondary mb-0">PostgreSQL is compiled and bundled directly inside Focus. The application starts its own database on port 5433 and stops cleanly.</p>
+          </div>
+        </div>
+
+        <div class="why-focus-card">
+          <div class="why-icon-circle">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+          </div>
+          <div>
+            <strong class="d-block text-dark fw-bold mb-1" style="font-size:0.9rem;">100% Private &amp; Local</strong>
+            <p class="small text-secondary mb-0">No cloud analytics, telemetry, or remote user tracking. Your tasks, attachments, and productivity statistics never leave your computer.</p>
+          </div>
+        </div>
+
+        <div class="why-focus-card">
+          <div class="why-icon-circle">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div>
+            <strong class="d-block text-dark fw-bold mb-1" style="font-size:0.9rem;">Clean Slate by Default</strong>
+            <p class="small text-secondary mb-0">When you run Focus on a new machine, you get a clean workspace ready for your personal workflow. Starter records can be toggled in configuration.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: FAQ -->
+    <div class="col-lg-6">
+      <div class="d-flex align-items-center gap-3 mb-1">
+        <span class="section-icon-badge">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </span>
+        <div>
+          <h2 class="fs-4 fw-bold text-dark mb-0">Frequently Asked Questions</h2>
+          <p class="text-secondary small mb-0">Common questions and troubleshooting.</p>
+        </div>
+      </div>
+
+      <div class="accordion accordion-ff mt-4" id="faqAccordion">
+        <div class="accordion-item">
+          <h3 class="accordion-header" id="h1">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c1" aria-expanded="false" aria-controls="c1">
+              What if port 8484 is already in use?
+            </button>
+          </h3>
+          <div id="c1" class="accordion-collapse collapse" aria-labelledby="h1" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              Focus defaults to port 8484. If another process is using it, override via the <code>SERVER_PORT</code> environment variable:
+              <div class="cmd-box mt-2"><code>SERVER_PORT=8090 java -jar focus.jar</code></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h3 class="accordion-header" id="h2">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c2" aria-expanded="false" aria-controls="c2">
+              Where is application data stored?
+            </button>
+          </h3>
+          <div id="c2" class="accordion-collapse collapse" aria-labelledby="h2" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              Database records persist in <code>postgres-data/</code> and uploaded file attachments in <code>storage/</code> in the application directory. Download a complete backup ZIP or restore from <strong>Settings &gt; Data management</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h3 class="accordion-header" id="h3">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c3" aria-expanded="false" aria-controls="c3">
+              Can I use an external PostgreSQL database?
+            </button>
+          </h3>
+          <div id="c3" class="accordion-collapse collapse" aria-labelledby="h3" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              Yes. Activate the <code>prod</code> profile and provide JDBC credentials:
+              <div class="cmd-box mt-2"><code>SPRING_PROFILES_ACTIVE=prod DB_URL=jdbc:postgresql://host:5432/db DB_USERNAME=user DB_PASSWORD=pass java -jar focus.jar</code></div>
+              Focus bypasses its embedded database automatically when an external URL is configured.
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h3 class="accordion-header" id="h4">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c4" aria-expanded="false" aria-controls="c4">
+              How do I shut down Focus?
+            </button>
+          </h3>
+          <div id="c4" class="accordion-collapse collapse" aria-labelledby="h4" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              In a terminal, press <kbd>Ctrl + C</kbd> for graceful shutdown. In daemon mode on macOS or Linux, run <code>./bin/mac/focus stop</code> or <code>./bin/linux/focus stop</code>. On Windows, run <code>.\bin\win\focus.bat stop</code> or close the console window. To completely uninstall on Windows, use <strong>Windows Settings &gt; Apps</strong> or run <code>.\bin\win\uninstall.bat</code>.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="site-footer">
+  <div class="container-xl d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div class="d-flex align-items-center gap-2">
+      <span class="brand-mark-square" style="width:1.6rem;height:1.6rem;font-size:0.9rem;">F</span>
+      <span class="fw-bold text-dark">Focus Fresh</span>
+      <span class="badge bg-light text-secondary border ms-1" style="font-size:0.68rem;">v1.0.0</span>
+    </div>
+
+    <div class="text-secondary small text-center">
+      <strong>Personal Productivity Monolith</strong> — Runs 100% locally with bundled native PostgreSQL. Free, private, and self-contained.
+    </div>
+
+    <div class="d-flex align-items-center gap-3 small">
+      <a href="https://github.com" target="_blank" rel="noopener" class="text-secondary text-decoration-none d-inline-flex align-items-center gap-1">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        Source
+      </a>
+      <a href="#all-downloads-section" class="text-secondary text-decoration-none d-inline-flex align-items-center gap-1">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
+        Downloads
+      </a>
+      <a th:href="@{/dashboard}" class="text-secondary text-decoration-none d-inline-flex align-items-center gap-1">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Docs
+      </a>
+    </div>
+  </div>
+</footer>
+
+<script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/app.js}"></script>
+<script>
+  function switchPlatform(platform) {
+    ['tabBtnMac','tabBtnWin','tabBtnLinux','tabBtnAll'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    });
+    ['platformViewMac','platformViewWin','platformViewLinux'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    });
+
+    if (platform === 'all') {
+      var allBtn = document.getElementById('tabBtnAll');
+      if (allBtn) allBtn.classList.add('active');
+      var sec = document.getElementById('all-downloads-section');
+      if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    var map = { mac: ['tabBtnMac','platformViewMac'], win: ['tabBtnWin','platformViewWin'], linux: ['tabBtnLinux','platformViewLinux'] };
+    if (map[platform]) {
+      var btn = document.getElementById(map[platform][0]);
+      var view = document.getElementById(map[platform][1]);
+      if (btn) btn.classList.add('active');
+      if (view) view.classList.add('active');
+    }
+  }
+
+  // Auto-detect OS on load
+  (function() {
+    var ua = window.navigator.userAgent || '';
+    var pl = window.navigator.platform || '';
+    if (/Win/i.test(ua) || /Win/i.test(pl)) {
+      switchPlatform('win');
+    } else if (/Linux/i.test(ua) || /Linux/i.test(pl)) {
+      switchPlatform('linux');
+    } else {
+      switchPlatform('mac');
+    }
+  })();
+
+  function copySnippetText(btn, text) {
+    navigator.clipboard.writeText(text).then(function() {
+      var prev = btn.innerHTML;
+      btn.innerHTML = '<span style="color:#10b981;font-weight:700;">Copied!</span>';
+      setTimeout(function() { btn.innerHTML = prev; }, 2000);
+    });
+  }
+</script>
+
+</body>
+</html>

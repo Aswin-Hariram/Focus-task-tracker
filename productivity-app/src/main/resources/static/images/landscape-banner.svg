@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 220" role="img" aria-labelledby="title">
+<title id="title">Peaceful landscape with rolling hills and trees</title>
+<defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#a9e6df"/><stop offset="1" stop-color="#e8fbe4"/></linearGradient><linearGradient id="hill" x2="0" y2="1"><stop stop-color="#9bdc87"/><stop offset="1" stop-color="#37b28c"/></linearGradient></defs>
+<rect width="900" height="220" rx="18" fill="url(#sky)"/>
+<g fill="#fff" opacity=".8"><circle cx="730" cy="108" r="53"/><circle cx="785" cy="100" r="35"/><rect x="681" y="106" width="145" height="24" rx="12"/><circle cx="94" cy="143" r="24"/><circle cx="125" cy="147" r="17"/></g>
+<circle cx="595" cy="163" r="48" fill="#fffdf0" opacity=".8"/>
+<path d="M0 170 Q110 112 235 165 T480 165 T900 137 V220 H0Z" fill="#b7e6a2"/>
+<path d="M0 190 Q135 146 260 188 T540 180 T900 158 V220 H0Z" fill="#70cba9"/>
+<path d="M0 209 Q130 167 290 208 T650 197 T900 180 V220 H0Z" fill="url(#hill)"/>
+<g stroke="#235e49" stroke-width="4" stroke-linecap="round"><path d="M200 206V132M265 211V116M740 207V128M810 210V89M850 209V65"/></g>
+<g fill="#249a65"><ellipse cx="200" cy="143" rx="14" ry="37"/><ellipse cx="265" cy="127" rx="19" ry="49"/><ellipse cx="740" cy="141" rx="16" ry="38"/><ellipse cx="810" cy="111" rx="23" ry="61"/><ellipse cx="850" cy="91" rx="24" ry="72"/></g>
+<g fill="none" stroke="#1c4c5c" stroke-width="2.5" stroke-linecap="round"><path d="m608 40 7 5 7-3M651 64l7 5 7-3M697 37l7 5 7-3"/></g>
+</svg>

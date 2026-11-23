@@ -1,0 +1,17 @@
+/* Categories Module Styles - productivity-category */
+
+.form-control-color {
+  height: 3rem;
+  padding: .35rem;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.category-dot-preview {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  vertical-align: middle;
+  border: 1px solid rgba(0,0,0,0.1);
+}

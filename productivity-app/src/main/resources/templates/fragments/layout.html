@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+  <meta charset="UTF-8">
+  <script>
+    (function() {
+      try {
+        const saved = localStorage.getItem('focus-theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = saved === 'dark' || (!saved && prefersDark) ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-bs-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="_csrf" th:content="${_csrf}">
+  <meta name="_csrf_header" content="X-CSRF-TOKEN">
+  <title th:text="${(title != null ? title : 'Page not found') + ' · Focus'}">Focus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css(v='1.0.24')}">
+  <link th:if="${currentPath == '/' or currentPath == '/dashboard' or (currentPath != null and #strings.startsWith(currentPath, '/board'))}" rel="stylesheet" th:href="@{/css/board.css(v='1.0.5')}">
+  <link th:if="${currentPath == '/' or currentPath == '/dashboard' or (currentPath != null and #strings.startsWith(currentPath, '/analytics'))}" rel="stylesheet" th:href="@{/css/analytics.css(v='1.0.3')}">
+  <link th:if="${currentPath != null and #strings.startsWith(currentPath, '/categories')}" rel="stylesheet" th:href="@{/css/categories.css(v='1.0.0')}">
+  <link th:if="${currentPath != null and #strings.startsWith(currentPath, '/history')}" rel="stylesheet" th:href="@{/css/history.css(v='1.1.0')}">
+  <link th:if="${currentPath != null and #strings.startsWith(currentPath, '/overdue')}" rel="stylesheet" th:href="@{/css/overdue.css(v='1.0.1')}">
+  <link rel="stylesheet" th:href="@{/css/workspace.css(v='1.0.1')}">
+  <link th:if="${currentPath == '/' or currentPath == '/dashboard'}" rel="stylesheet" th:href="@{/css/dashboard.css(v='1.0.2')}">
+  <link th:if="${currentPath == '/tasks'}" rel="stylesheet" th:href="@{/css/tasks.css}">
+  <link th:if="${currentPath != null and #strings.startsWith(currentPath, '/tasks/') and task != null}" rel="stylesheet" th:href="@{/css/task-detail.css(v='1.0.6')}">
+</head>
+<body>
+<aside th:fragment="sidebar" class="app-sidebar" id="appSidebar" aria-label="Primary navigation">
+  <div class="brand"><span class="brand-mark" aria-hidden="true">F</span><span>Focus</span></div>
+  <nav class="sidebar-nav">
+    <p class="nav-label">Workspace</p>
+    <a th:href="@{/dashboard}" th:classappend="${currentPath == '/' or currentPath == '/dashboard'} ? ' active' : ''"><svg><use th:href="@{/images/icons.svg#grid}"/></svg><span>Dashboard</span></a>
+    <a th:if="${hasBoardModule == null or hasBoardModule}" th:href="@{/board}" th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/board')} ? ' active' : ''"><svg><use th:href="@{/images/icons.svg#board}"/></svg><span>Daily board</span></a>
+    <a th:href="@{/tasks}" th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/tasks')} ? ' active' : ''"><svg><use th:href="@{/images/icons.svg#check-square}"/></svg><span>Tasks</span></a>
+    <a th:if="${hasOverdueModule == null or hasOverdueModule}" th:href="@{/overdue}" th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/overdue')} ? ' active' : ''"><svg><use th:href="@{/images/icons.svg#clock}"/></svg><span>Overdue</span></a>
+    <a th:if="${hasHistoryModule == null or hasHistoryModule}" th:href="@{/history}" th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/history')} ? ' active' : ''"><svg><use th:href="@{/images/icons.svg#history}"/></svg><span>History</span></a>
+    <p class="nav-label">Insights</p>
+    <a th:if="${hasAnalyticsModule == null or hasAnalyticsModule}" th:href="@{/analytics}" th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/analytics')} ? ' active' : ''"><svg><use th:href="@{/images/icons.svg#chart}"/></svg><span>Analytics</span></a>
+    <a th:href="@{/categories}" th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/categories')} ? ' active' : ''"><svg><use th:href="@{/images/icons.svg#tag}"/></svg><span>Categories</span></a>
+  </nav>
+  <a class="sidebar-share" th:href="@{/share}" th:classappend="${currentPath != null and (currentPath == '/share' or currentPath == '/download')} ? ' active' : ''"><svg><use th:href="@{/images/icons.svg#share}"/></svg><span>Share app</span></a>
+  <a class="sidebar-settings" th:href="@{/settings}" th:classappend="${currentPath != null and currentPath == '/settings'} ? ' active' : ''"><svg><use th:href="@{/images/icons.svg#settings}"/></svg><span>Settings</span></a>
+</aside>
+<header th:fragment="topbar" class="app-topbar">
+  <button class="icon-button mobile-menu" type="button" data-sidebar-toggle aria-controls="appSidebar" aria-expanded="false" aria-label="Open navigation"><svg><use th:href="@{/images/icons.svg#menu}"/></svg></button>
+  <div class="topbar-date"><span th:text="${#temporals.format(today != null ? today : T(java.time.LocalDate).now(), 'EEEE')}">Monday</span><strong th:text="${#temporals.format(today != null ? today : T(java.time.LocalDate).now(), 'd MMMM yyyy')}">1 January 2026</strong></div>
+  <form class="topbar-search" th:action="${currentPath == '/history'} ? @{/history} : @{/tasks}" method="get" role="search">
+    <svg class="search-icon"><use th:href="@{/images/icons.svg#search}"/></svg>
+    <input type="text" name="query" th:value="${currentPath == '/tasks' or currentPath == '/history' ? query : null}" class="search-input" placeholder="Search tasks by name or description…" th:placeholder="${currentPath == '/history' ? 'Search task history…' : 'Search tasks by name or description…'}" th:aria-label="${currentPath == '/history' ? 'Search task history' : 'Search tasks'}" autocomplete="off" id="topbarSearchInput">
+    <th:block th:if="${currentPath == '/history'}">
+      <input th:if="${selectedCategory != null}" type="hidden" name="category" th:value="${selectedCategory}">
+      <input th:if="${from != null}" type="hidden" name="from" th:value="${from}">
+      <input th:if="${to != null}" type="hidden" name="to" th:value="${to}">
+      <input th:if="${action != null}" type="hidden" name="action" th:value="${action}">
+      <input type="hidden" name="view" th:value="${view}">
+    </th:block>
+    <kbd class="search-kbd">⌘ K</kbd>
+  </form>
+  <div class="d-flex align-items-center gap-2">
+    <!-- Active Timer Indicator in Topbar -->
+    <div id="topbarActiveTimer" class="topbar-active-timer"
+         th:data-has-active="${activeRunningCount != null and activeRunningCount > 0}"
+         th:data-count="${activeRunningCount != null ? activeRunningCount : 0}"
+         th:data-task-id="${activeTimerTask != null ? activeTimerTask.id : ''}"
+         th:data-timer-started="${activeTimerTask != null ? activeTimerTask.timerStartedAtMillis : ''}"
+         th:data-timer-accumulated="${activeTimerTask != null ? activeTimerTask.timerAccumulatedSeconds : 0}"
+         th:style="${activeRunningCount != null and activeRunningCount > 0 ? '' : 'display:none;'}">
+      <span class="active-timer-pulse-dot" aria-hidden="true"></span>
+      <div id="topbarSingleTimer" class="d-inline-flex align-items-center" th:style="${activeRunningCount == 1 ? '' : 'display:none;'}">
+        <a th:href="@{/tasks/{id}(id=${activeTimerTask != null ? activeTimerTask.id : 0})}" class="topbar-timer-task" id="topbarTimerTaskName" th:text="${activeTimerTask != null ? activeTimerTask.name : ''}">Task</a>
+        <span class="topbar-timer-clock ms-1" id="topbarTimerClock">00:00:00</span>
+        <div class="topbar-timer-actions ms-1">
+          <form th:action="@{/tasks/{id}/timer/pause(id=${activeTimerTask != null ? activeTimerTask.id : 0})}" method="post" class="d-inline" id="topbarPauseForm">
+            <input type="hidden" name="_csrf" th:value="${_csrf}">
+            <button type="submit" class="icon-button topbar-timer-btn" title="Pause timer" aria-label="Pause timer">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+            </button>
+          </form>
+          <form th:action="@{/tasks/{id}/timer/stop(id=${activeTimerTask != null ? activeTimerTask.id : 0})}" method="post" class="d-inline" id="topbarStopForm">
+            <input type="hidden" name="_csrf" th:value="${_csrf}">
+            <button type="submit" class="icon-button topbar-timer-btn topbar-timer-btn-stop" title="Stop timer" aria-label="Stop timer">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+            </button>
+          </form>
+        </div>
+      </div>
+      <div id="topbarMultiTimer" class="dropdown d-inline-flex align-items-center" th:style="${activeRunningCount != null and activeRunningCount > 1 ? '' : 'display:none;'}">
+        <button type="button" class="btn btn-sm py-0 px-1 dropdown-toggle fw-semibold text-reset border-0 d-flex align-items-center gap-1" data-bs-toggle="dropdown" aria-expanded="false">
+          <span id="topbarActiveCount" th:text="${(activeRunningCount != null ? activeRunningCount : 0) + ' active timers'}">2 active timers</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm p-2 topbar-multi-timer-menu" id="topbarMultiTimerList" style="min-width: 250px;">
+          <li th:each="task : ${activeRunningTasks}" class="p-2 border-bottom last-border-0" th:data-multi-task-id="${task.id}">
+            <div class="d-flex justify-content-between align-items-center gap-2">
+              <a th:href="@{/tasks/{id}(id=${task.id})}" class="fw-semibold text-decoration-none small text-truncate" style="max-width: 140px;" th:text="${task.name}">Task</a>
+              <div class="d-flex align-items-center gap-1">
+                <form th:action="@{/tasks/{id}/timer/pause(id=${task.id})}" method="post" class="d-inline">
+                  <input type="hidden" name="_csrf" th:value="${_csrf}">
+                  <button type="submit" class="icon-button topbar-timer-btn" title="Pause">
+                    <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+                  </button>
+                </form>
+                <form th:action="@{/tasks/{id}/timer/stop(id=${task.id})}" method="post" class="d-inline">
+                  <input type="hidden" name="_csrf" th:value="${_csrf}">
+                  <button type="submit" class="icon-button topbar-timer-btn topbar-timer-btn-stop" title="Stop">
+                    <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <button class="icon-button theme-toggle-btn" type="button" data-theme-toggle aria-label="Toggle dark theme" title="Toggle dark / light theme">
+      <svg class="theme-icon-light"><use th:href="@{/images/icons.svg#sun}"/></svg>
+      <svg class="theme-icon-dark"><use th:href="@{/images/icons.svg#moon}"/></svg>
+    </button>
+    <a class="btn btn-primary btn-sm" th:href="@{/tasks/new}"><svg class="btn-icon"><use th:href="@{/images/icons.svg#plus}"/></svg>New task</a>
+<!--    <div class="user-avatar" title="Aswin" aria-label="User profile: Aswin">-->
+<!--      <svg viewBox="0 0 36 36" width="36" height="36" fill="none">-->
+<!--        <circle cx="18" cy="18" r="18" fill="#60A5FA"/>-->
+<!--        <circle cx="18" cy="13" r="6" fill="#FDE047"/>-->
+<!--        <path d="M7 32c0-6 5-11 11-11s11 5 11 11" fill="#F59E0B"/>-->
+<!--      </svg>-->
+<!--    </div>-->
+  </div>
+</header>
+<div th:fragment="flash" class="flash-stack" aria-live="polite">
+  <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="status"
+       th:attr="data-deleted-task-id=${deletedTaskId},data-deleted-task-name=${deletedTaskName}"><span th:text="${success}">Saved</span><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss"></button></div>
+  <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert"><span th:text="${error}">Error</span><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss"></button></div>
+</div>
+<img th:fragment="heroIllustration" class="hero-banner-illustration" th:src="@{/images/good_morning_card.svg}" alt="">
+<th:block th:fragment="scripts">
+  <div class="sidebar-backdrop" data-sidebar-toggle aria-hidden="true"></div>
+
+  <dialog id="uploadNotice" class="upload-notice bg-body text-body border rounded-3 shadow p-4"
+          aria-labelledby="uploadNoticeTitle">
+    <h2 id="uploadNoticeTitle" class="h5 mb-3" role="status">Uploading files…</h2>
+    <progress id="uploadNoticeProgress" class="w-100" max="100" aria-labelledby="uploadNoticeTitle"></progress>
+    <p class="small text-body-secondary mb-0 mt-2">Keep this page open until Focus finishes.</p>
+  </dialog>
+
+  <template id="selectedFilePreviewButton">
+    <button type="button" class="icon-button flex-shrink-0">
+      <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#eye}"/></svg>
+    </button>
+  </template>
+
+  <!-- Global Task Completion Modal -->
+  <div class="modal fade" id="taskCompletionModal" tabindex="-1" aria-labelledby="taskCompletionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="taskCompletionModalLabel">
+            <span class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle p-2" style="width: 36px; height: 36px;">
+              <svg width="20" height="20"><use th:href="@{/images/icons.svg#check}"/></svg>
+            </span>
+            Complete Task
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="taskCompletionForm" method="post" enctype="multipart/form-data">
+          <input type="hidden" name="status" value="COMPLETED">
+          <input type="hidden" id="modalTaskId" name="taskId" value="">
+          <input type="hidden" id="modalRedirectUrl" name="redirectUrl" value="">
+          <input type="hidden" name="_csrf" th:value="${_csrf}">
+          <div class="modal-body py-3">
+            <p class="text-muted small mb-3">Marking <strong id="modalTaskName" class="text-body">Task</strong> as completed. Record what was achieved and attach any supporting materials below.</p>
+
+            <div class="mb-3">
+              <label for="modalCompletionNote" class="form-label fw-semibold small">Completion details / note</label>
+              <textarea class="form-control" id="modalCompletionNote" name="completionNote" rows="3" placeholder="Summary of what was achieved, decided, or delivered..."></textarea>
+            </div>
+
+            <div class="mb-3">
+              <div th:replace="~{fragments/layout :: supportingFiles('modalCompletionFiles', 'files')}"></div>
+            </div>
+
+            <div class="mb-2">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label fw-semibold small mb-0">Reference links <span class="text-muted fw-normal">(optional)</span></label>
+                <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" id="modalAddLinkBtn">+ Add another link</button>
+              </div>
+              <div id="modalLinksContainer">
+                <div class="row g-2 mb-2 link-row">
+                  <div class="col-sm-7">
+                    <div class="input-group" data-draft-url>
+                      <input class="form-control" type="url" aria-label="Reference link URL" name="linkUrls" placeholder="https://github.com/... or Google Doc">
+                      <a th:replace="~{fragments/layout :: draftLinkOpen}"></a>
+                    </div>
+                  </div>
+                  <div class="col-sm-5 d-flex gap-1">
+                    <input class="form-control" type="text" name="linkLabels" placeholder="Label (e.g. PR, Deliverable)">
+                    <button type="button" class="btn btn-outline-danger btn-sm px-2 remove-link-btn" title="Remove link" style="display:none;">&times;</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-top-0 pt-0">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success px-4" id="modalSubmitBtn">
+              <svg class="btn-icon me-1"><use th:href="@{/images/icons.svg#check}"/></svg>
+              Mark Completed
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Task Progress Update Modal -->
+  <div class="modal fade progress-dialog" id="progressUpdateModal" data-progress-tone="info" tabindex="-1" aria-labelledby="progressUpdateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header progress-dialog-header">
+          <span class="progress-dialog-hero-icon progress-icon-badge" aria-hidden="true">
+            <svg><use id="progressModalIcon" th:href="@{/images/icons.svg#message-square}"/></svg>
+          </span>
+          <div class="progress-dialog-heading">
+            <h2 class="modal-title" id="progressUpdateModalLabel"><span id="progressModalTitle">Log progress update</span></h2>
+            <p><span id="progressModalContext">Add details about the latest progress for</span> <strong id="progressModalTaskName">Task</strong>.</p>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="progressUpdateForm" class="d-flex flex-column overflow-hidden" method="post" enctype="multipart/form-data">
+          <input type="hidden" name="confirmedCompletion" id="progressModalConfirmedCompletion">
+          <input type="hidden" id="progressModalStatus" name="status" value="">
+          <input type="hidden" name="keepCurrentStatus" value="true">
+          <input type="hidden" id="progressModalTaskId" name="taskId" value="">
+          <input type="hidden" id="progressModalRedirectUrl" name="redirectUrl" value="">
+          <input type="hidden" name="_csrf" th:value="${_csrf}">
+          <div class="modal-body">
+
+            <div class="mb-3">
+              <label for="progressModalDescription" class="form-label fw-semibold small"><span id="progressModalDetailsLabel">Progress details</span> <span id="progressModalOptionalDetails" class="text-muted fw-normal">(optional)</span><span id="progressModalRequiredDetails" class="text-danger" hidden>*</span></label>
+              <textarea class="form-control" id="progressModalDescription" name="description" rows="3" maxlength="3000" placeholder="Describe work completed, milestones achieved, or blockers solved..."></textarea>
+              <div class="progress-dialog-count" data-count-for="progressModalDescription">0 / 3000</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="progressModalReminder" class="form-label fw-semibold small">Things to remember / next steps <span class="text-muted fw-normal">(optional)</span></label>
+              <input class="form-control" type="text" id="progressModalReminder" name="reminder" maxlength="1500" placeholder="Add notes, next steps or key points…">
+              <div class="progress-dialog-count" data-count-for="progressModalReminder">0 / 1500</div>
+            </div>
+
+            <div class="mb-3" id="progressModalRecordedAtContainer">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="progressModalRecordedAt" class="form-label fw-semibold small mb-0">Progress date &amp; time</label>
+                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none small text-muted" id="progressModalSetNowBtn">Set to now</button>
+              </div>
+              <input class="form-control form-control-sm" type="datetime-local" id="progressModalRecordedAt" name="recordedAt" aria-describedby="progressModalDateHelp">
+              <div class="form-text small text-muted" id="progressModalDateHelp">Use the date and time the work happened.</div>
+            </div>
+
+            <template id="progressModalFileRow">
+              <div class="progress-dialog-material-row progress-material-card">
+                <svg th:replace="~{fragments/layout :: supportingFileIcon}"></svg>
+                <div class="progress-material-copy"><strong></strong><small></small></div>
+                <a class="progress-material-action" data-preview target="_blank" rel="noopener noreferrer" title="Preview file" aria-label="Preview file" hidden><svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#eye}"/></svg></a>
+                <button type="button" class="progress-material-action" data-replacement-preview hidden>
+                  <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#eye}"/></svg>
+                </button>
+                <a class="progress-material-action" data-download title="Download file" aria-label="Download file"><svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#download}"/></svg></a>
+                <button type="button" class="progress-material-action" data-replace title="Replace file" aria-label="Replace file"><svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#edit}"/></svg></button>
+                <input type="file" data-replacement hidden>
+                <button type="button" class="progress-material-action" data-remove-toggle aria-pressed="false" title="Remove file on save" aria-label="Remove file on save"><svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#close}"/></svg></button>
+                <input type="checkbox" data-remove hidden>
+              </div>
+            </template>
+            <template id="progressModalLinkRow">
+              <div class="progress-dialog-material-row progress-dialog-link-row mb-2">
+                <div class="progress-material-card">
+                  <span class="supporting-files-badge"><svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#link}"/></svg></span>
+                  <button type="button" class="progress-material-copy progress-material-edit" data-edit aria-expanded="false">
+                    <strong></strong><small></small>
+                  </button>
+                  <a class="progress-material-action" data-open target="_blank" rel="noopener noreferrer" title="Open link in a new tab" aria-label="Open link in a new tab"><svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#external-link}"/></svg></a>
+                  <button type="button" class="progress-material-action text-danger" data-remove-toggle aria-pressed="false" title="Remove link on save" aria-label="Remove link on save"><svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#trash}"/></svg></button>
+                  <input type="checkbox" data-remove hidden>
+                </div>
+                <div data-link-fields class="mt-2" hidden>
+                  <label class="d-block small">Link URL
+                    <input type="url" class="form-control form-control-sm" maxlength="1000" data-existing-url required>
+                  </label>
+                  <label class="d-block small mt-2">Link label (optional)
+                    <input type="text" class="form-control form-control-sm" maxlength="120" data-existing-label>
+                  </label>
+                </div>
+              </div>
+            </template>
+            <fieldset>
+              <div class="mb-3">
+                <div th:replace="~{fragments/layout :: supportingFiles('progressModalFiles', 'files')}"></div>
+              </div>
+
+              <section id="progressModalExistingFiles" class="mb-3" hidden>
+                <div data-existing-items></div>
+              </section>
+              <div class="mb-2">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div th:replace="~{fragments/layout :: progressLinksHeading}"></div>
+                  <button type="button" class="btn btn-sm btn-outline-primary" id="progressModalAddLinkBtn">+ Add link</button>
+                </div>
+                <section id="progressModalExistingLinks" class="mb-3" hidden>
+                  <div data-existing-items></div>
+                </section>
+                <div id="progressModalLinksContainer">
+                  <div class="row g-2 mx-0 mb-2 link-row progress-dialog-material-row progress-dialog-link-row">
+                    <div class="col-sm-7">
+                      <div class="input-group" data-draft-url>
+                        <input class="form-control" type="url" aria-label="Reference link URL" name="linkUrls" placeholder="https://github.com/... or document URL">
+                        <a th:replace="~{fragments/layout :: draftLinkOpen}"></a>
+                      </div>
+                    </div>
+                    <div class="col-sm-5 d-flex gap-1">
+                      <input class="form-control" type="text" name="linkLabels" placeholder="Label (e.g. PR, Spec, Output)">
+                      <button type="button" class="btn btn-outline-danger btn-sm px-2 remove-link-btn" title="Remove link" style="display:none;">&times;</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <div class="modal-footer d-flex justify-content-between align-items-center">
+            <div>
+              <button type="button" class="btn btn-outline-danger btn-sm" id="progressModalDeleteBtn" hidden>
+                <svg class="btn-icon me-1" style="width:.85rem;height:.85rem;" aria-hidden="true"><use th:href="@{/images/icons.svg#trash}"/></svg><span data-progress-delete-label>Delete update</span>
+              </button>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary px-4" id="progressModalSubmitBtn">
+                <span id="progressModalSubmitLabel">Save progress update</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Confirmation Modal for Irreversible Actions -->
+  <div class="modal fade focus-confirm-modal" id="focusConfirmModal" tabindex="-1" aria-labelledby="focusConfirmModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-body text-center p-4">
+          <div class="confirm-icon-badge mx-auto mb-3" id="focusConfirmIconBadge" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <h5 class="modal-title fw-bold mb-2" id="focusConfirmModalTitle">Confirm Action</h5>
+          <p class="text-muted small mb-4" id="focusConfirmModalMessage">Are you sure you want to proceed? This action cannot be undone.</p>
+          <div class="d-flex gap-2 justify-content-center">
+            <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal" id="focusConfirmCancelBtn">Cancel</button>
+            <button type="button" class="btn btn-danger btn-sm px-3" id="focusConfirmProceedBtn">Proceed</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Uploading Pop-up Modal with Cancel Option -->
+  <div class="modal fade" id="fileUploadModal" tabindex="-1" aria-labelledby="fileUploadModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header border-bottom-0 pb-1">
+          <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="fileUploadModalLabel">
+            <span class="p-2 rounded-circle bg-primary-subtle text-primary d-inline-flex" aria-hidden="true">
+              <svg class="btn-icon" style="width: 1.25rem; height: 1.25rem;"><use th:href="@{/images/icons.svg#upload-cloud}"/></svg>
+            </span>
+            <span id="fileUploadModalTitle">Upload files</span>
+          </h5>
+          <button type="button" class="btn-close" id="fileUploadModalCloseBtn" data-bs-dismiss="modal" aria-label="Cancel and close"></button>
+        </div>
+        <div class="modal-body py-3">
+          <div id="fileUploadSelectedSection">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="small fw-semibold text-secondary" id="fileUploadCount">0 files selected</span>
+              <span class="small text-muted font-monospace" id="fileUploadTotalSize">0 KB</span>
+            </div>
+            <ul class="list-group list-group-flush border rounded mb-3 overflow-auto" id="fileUploadList" style="max-height: 180px;">
+              <!-- Selected file items populated dynamically -->
+            </ul>
+          </div>
+
+          <!-- Progress Section -->
+          <div id="fileUploadProgressSection" class="mt-2" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="small fw-semibold" id="fileUploadStatusText" role="status">Uploading files…</span>
+              <span class="small fw-bold text-primary font-monospace" id="fileUploadPercent">0%</span>
+            </div>
+            <div class="progress" style="height: 10px;" role="progressbar" aria-label="File upload progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="fileUploadProgressBar" style="width: 0%;"></div>
+            </div>
+            <p class="small text-muted mt-2 mb-0" id="fileUploadHint">Please keep this window open while files are uploading.</p>
+          </div>
+
+          <!-- Error Alert (hidden by default) -->
+          <div class="alert alert-danger py-2 mt-3 mb-0 small" id="fileUploadErrorAlert" style="display: none;" role="alert">
+            <svg class="btn-icon me-1"><use th:href="@{/images/icons.svg#alert-circle}"/></svg>
+            <span id="fileUploadErrorMessage">Upload failed.</span>
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 pt-0">
+          <button type="button" class="btn btn-outline-danger" id="fileUploadCancelBtn">
+            <svg class="btn-icon me-1" style="width: 0.9rem; height: 0.9rem;"><use th:href="@{/images/icons.svg#x}"/></svg>
+            Cancel upload
+          </button>
+          <button type="button" class="btn btn-primary px-4" id="fileUploadSubmitBtn">
+            <svg class="btn-icon me-1" style="width: 0.9rem; height: 0.9rem;"><use th:href="@{/images/icons.svg#upload-cloud}"/></svg>
+            Start upload
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+  <script th:src="@{/js/app.js(v='1.0.31')}"></script>
+  <script th:if="${currentPath == '/' or currentPath == '/dashboard'}" th:src="@{/js/analytics.js(v='1.0.0')}"></script>
+</th:block>
+
+  <div th:fragment="progressStatusChoices(statusId)" class="mb-3">
+    <label class="form-label fw-semibold small" th:for="${statusId}">Progress status</label>
+    <select class="form-select" name="status" th:id="${statusId}">
+      <option value="" selected>Progress update only</option>
+      <option value="YET_TO_START">Yet to start</option>
+      <option value="IN_PROGRESS">In progress</option>
+      <option value="COMPLETED">Complete</option>
+      <option value="BLOCKED">Blocked/Closed</option>
+    </select>
+  </div>
+  <div th:fragment="supportingFiles(inputId, fieldName)" class="supporting-files" data-supporting-files
+       th:with="progressPicker=${inputId == 'progressModalFiles' or inputId == 'progressComposerFiles'}">
+    <div class="supporting-files-header">
+      <span class="supporting-files-badge" aria-hidden="true">
+        <svg class="btn-icon"><use th:href="@{/images/icons.svg#paperclip}"/></svg>
+      </span>
+      <div>
+        <label class="supporting-files-title" th:for="${inputId}"><strong th:text="${progressPicker ? 'Attachments' : 'Supporting files'}">Supporting files</strong> <span>(optional)</span></label>
+        <div class="supporting-files-hint" th:id="|${inputId}-hint|" th:text="${progressPicker ? 'Add files (PDF, DOC, XLSX, images, and more).' : 'Select one or more files of any type.'}">Select one or more files of any type.</div>
+      </div>
+    </div>
+    <input class="form-control" type="file" th:id="${inputId}" th:name="${fieldName}" multiple
+           th:aria-describedby="|${inputId}-hint|">
+    <button type="button" class="file-dropzone supporting-files-upload"
+            th:classappend="${progressPicker} ? 'progress-dialog-dropzone'" data-file-drop="true"
+            th:if="${inputId != 'attachmentFile'}" hidden>
+      <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#upload-cloud}"/></svg>
+      <span>Drag and drop files here, or <strong>click to browse</strong></span>
+      <small>PDF, PNG, JPG, XLSX, DOCX, TXT, and other file types</small>
+    </button>
+    <ul class="supporting-files-list" aria-label="Selected files" aria-live="polite" hidden></ul>
+    <template>
+      <li class="supporting-file">
+        <svg th:replace="~{fragments/layout :: supportingFileIcon}"></svg>
+        <div class="supporting-file-info">
+          <div class="supporting-file-name"></div>
+          <div class="supporting-file-size"></div>
+        </div>
+        <button type="button" class="btn supporting-file-remove" aria-label="Remove file" title="Remove file">
+          <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#trash}"/></svg>
+        </button>
+      </li>
+    </template>
+  </div>
+  <svg th:fragment="supportingFileIcon" class="btn-icon supporting-file-icon" viewBox="0 0 32 38" aria-hidden="true" focusable="false">
+    <path class="supporting-file-page" d="M3 4a3 3 0 0 1 3-3h14l9 9v24a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3Z"/>
+    <path class="supporting-file-fold" d="M20 1v7.5A1.5 1.5 0 0 0 21.5 10H29"/>
+    <rect class="supporting-file-type-background" x="1" y="19" width="25" height="13" rx="2.5"/>
+    <text class="supporting-file-type" x="13.5" y="28.5">FILE</text>
+  </svg>
+  <div th:fragment="timelineMaterials(taskId, files, links)" class="timeline-materials"
+       th:if="${!files.isEmpty() or !links.isEmpty()}">
+    <section th:unless="${files.isEmpty()}">
+      <h3><svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#paperclip}"/></svg> Attachments · [[${files.size()}]]</h3>
+      <ul class="timeline-material-list timeline-file-list">
+        <li th:each="file : ${files}" th:attr="data-storage-file=${file.id}">
+          <a class="timeline-material-chip timeline-file-chip" th:href="@{/tasks/{id}/attachments/{fileId}(id=${taskId},fileId=${file.id})}"
+             th:title="${file.originalName}" th:data-progress-file-id="${file.id}" th:data-filename="${file.originalName}" th:data-content-type="${file.contentType}" th:data-size-bytes="${file.sizeBytes}" th:data-previewable="${file.previewContentType != null}">
+            <span class="timeline-file-badge" aria-hidden="true"><svg class="btn-icon"><use th:href="@{/images/icons.svg#file-text}"/></svg></span>
+            <span class="timeline-material-label" th:text="${file.originalName}">Attachment</span>
+            <svg class="btn-icon timeline-download" aria-hidden="true"><use th:href="@{/images/icons.svg#download}"/></svg>
+          </a>
+          <a th:if="${file.previewContentType != null}" class="icon-button"
+             th:href="@{/tasks/{id}/attachments/{fileId}(id=${taskId},fileId=${file.id},preview=true)}"
+             th:aria-label="|Preview ${file.originalName} in a new tab|" title="Preview file" target="_blank" rel="noopener noreferrer">
+            <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#eye}"/></svg>
+          </a>
+        </li>
+      </ul>
+    </section>
+    <section th:unless="${links.isEmpty()}">
+      <h3><svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#link}"/></svg> Links · [[${links.size()}]]</h3>
+      <ul class="timeline-material-list">
+        <li th:each="link : ${links}" th:attr="data-storage-link=${link.id}">
+          <a class="timeline-material-chip" th:href="${link.url}" target="_blank" rel="noopener noreferrer" th:title="${link.url}" th:data-progress-link-id="${link.id}">
+            <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#link}"/></svg>
+            <span class="timeline-material-label" th:text="${link.label}">Link</span>
+            <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#external-link}"/></svg>
+            <span class="visually-hidden">(opens in a new tab)</span>
+          </a>
+        </li>
+      </ul>
+    </section>
+  </div>
+  <a th:fragment="draftLinkOpen" class="btn btn-outline-secondary" target="_blank" rel="noopener noreferrer"
+     aria-label="Open link in a new tab" title="Open link in a new tab" hidden>
+    <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#external-link}"/></svg>
+  </a>
+  <div th:fragment="progressLinksHeading" class="progress-dialog-section-heading">
+    <span class="supporting-files-badge" aria-hidden="true"><svg class="btn-icon"><use th:href="@{/images/icons.svg#link}"/></svg></span>
+    <div>
+      <strong>Reference links</strong> <span class="muted">(optional)</span>
+      <div class="supporting-files-hint">Add useful resources, such as documentation or designs.</div>
+    </div>
+  </div>
+</body></html>

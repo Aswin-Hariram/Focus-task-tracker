@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<aside th:replace="~{fragments/layout :: sidebar}"></aside>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main class="page-shell" th:attr="data-workspace-reset=${workspaceReset == true ? 'true' : null}">
+  <div class="page-container" style="max-width: 64rem">
+
+    <!-- Hero Banner with Slate Nature Illustration -->
+    <div class="page-hero-banner hero-banner-slate">
+      <div class="hero-banner-content">
+        <h1 class="hero-banner-title">Settings</h1>
+        <p class="hero-banner-subtitle">Workspace appearance, theme preferences, backups, and application configuration.</p>
+        <div class="hero-banner-actions">
+          <a class="btn btn-primary btn-sm shadow-sm" th:href="@{/dashboard}">
+            <svg class="btn-icon"><use th:href="@{/images/icons.svg#grid}"/></svg>Dashboard
+          </a>
+          <a class="btn btn-outline-secondary btn-sm" th:href="@{/settings/data/tasks.csv}">
+            <svg class="btn-icon"><use th:href="@{/images/icons.svg#download}"/></svg>Export tasks CSV
+          </a>
+          <a class="btn btn-outline-secondary btn-sm" th:href="@{/settings/data/tasks.xlsx}">
+            <svg class="btn-icon"><use th:href="@{/images/icons.svg#download}"/></svg>Export tasks Excel
+          </a>
+        </div>
+      </div>
+      <div th:replace="~{fragments/layout :: heroIllustration}"></div>
+    </div>
+
+    <section class="surface mb-4">
+      <div class="surface-header">
+        <h2 class="section-heading">Focus storage</h2>
+        <p class="section-caption">Focus saves task files, links, and updates inside a folder named <code>focus</code> at this location. Default location is your <strong>Documents</strong> folder.</p>
+      </div>
+      <div class="surface-body">
+        <form method="post" th:action="@{/settings/storage}">
+          <input type="hidden" name="_csrf" th:value="${_csrf}">
+          <label for="focusFolder" class="form-label">Folder on this computer</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="focusFolder" name="folder" th:value="${focusLocation}"
+                   placeholder="Enter the full path to an existing folder (e.g. Documents)" required>
+            <button type="button" class="btn btn-outline-secondary" id="focusBrowse"
+                    th:attr="data-url=@{/settings/storage/browse}">Browse</button>
+            <button type="submit" class="btn btn-primary">Save location</button>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <p id="focusBrowseStatus" class="small text-secondary mb-0" aria-live="polite"></p>
+            <span class="small text-muted"><svg class="btn-icon me-1" style="width:0.85rem;height:0.85rem;"><use th:href="@{/images/icons.svg#folder}"/></svg>Stores inside <code>focus/&lt;taskname&gt;/&lt;progress_update&gt;/</code></span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Share Focus App Section (Above Settings) -->
+    <section class="surface mb-4 border-primary-subtle" style="border: 1px solid rgba(37, 99, 235, 0.25); background: linear-gradient(to right, rgba(37, 99, 235, 0.03), transparent);">
+      <div class="surface-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-primary-subtle text-primary fw-semibold px-2 py-1" style="font-size: 0.75rem;">NEW</span>
+            <h2 class="section-heading mb-0">Share Focus app</h2>
+          </div>
+          <p class="section-caption mb-0">Create and share a link for anyone to download a fresh, self-contained Focus workspace with platform-specific setup instructions.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-primary btn-sm shadow-sm" th:href="@{/share}">
+            <svg class="btn-icon"><use th:href="@{/images/icons.svg#share}"/></svg>Open Share Hub
+          </a>
+          <a class="btn btn-outline-secondary btn-sm" th:href="@{/download}" target="_blank" rel="noopener">
+            <svg class="btn-icon"><use th:href="@{/images/icons.svg#external-link}"/></svg>Preview download page
+          </a>
+        </div>
+      </div>
+      <div class="surface-body pt-3">
+        <div class="row g-3 align-items-center">
+          <div class="col-lg-7">
+            <label class="form-label small text-secondary mb-1" for="settingsShareLinkInput">Quick share link to send to colleagues or friends</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-body-tertiary text-secondary">
+                <svg class="btn-icon" style="width: 0.9rem; height: 0.9rem;"><use th:href="@{/images/icons.svg#link}"/></svg>
+              </span>
+              <input type="text" class="form-control font-monospace text-secondary" id="settingsShareLinkInput" readonly value="http://localhost:8484/download">
+              <button class="btn btn-outline-primary" type="button" id="settingsCopyShareBtn" onclick="copySettingsShareLink(this)">
+                <svg class="btn-icon"><use th:href="@{/images/icons.svg#copy}"/></svg>
+                <span id="settingsCopyBtnLabel">Copy link</span>
+              </button>
+            </div>
+            <div id="settingsCopyAlert" class="small text-success mt-1" style="display: none;">
+              ✓ Link copied to clipboard! Anyone who opens this link can download Focus fresh for Mac, Windows, or Linux.
+            </div>
+          </div>
+          <div class="col-lg-5">
+            <div class="d-flex flex-wrap gap-2 text-secondary small pt-1">
+              <span class="badge bg-light text-dark border"><svg class="btn-icon me-1" style="width: 0.8rem; height: 0.8rem;"><use th:href="@{/images/icons.svg#check}"/></svg>macOS (DMG / ZIP)</span>
+              <span class="badge bg-light text-dark border"><svg class="btn-icon me-1" style="width: 0.8rem; height: 0.8rem;"><use th:href="@{/images/icons.svg#check}"/></svg>Windows (.exe / ZIP)</span>
+              <span class="badge bg-light text-dark border"><svg class="btn-icon me-1" style="width: 0.8rem; height: 0.8rem;"><use th:href="@{/images/icons.svg#check}"/></svg>Linux (JAR / Service)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Appearance & Theme Section -->
+    <section class="surface mb-4">
+      <div class="surface-header">
+        <div>
+          <h2 class="section-heading">Appearance</h2>
+          <p class="section-caption">Customize the visual theme of the workspace.</p>
+        </div>
+      </div>
+      <div class="surface-body">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <div>
+            <strong class="d-block mb-1">Color Theme</strong>
+            <span class="text-secondary small">Switch between Light and Dark mode, or follow your operating system automatically.</span>
+          </div>
+          <div class="btn-group shadow-sm" role="group" aria-label="Theme selector">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-theme-set="light">
+              <svg class="btn-icon me-1"><use th:href="@{/images/icons.svg#sun}"/></svg>Light
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-theme-set="dark">
+              <svg class="btn-icon me-1"><use th:href="@{/images/icons.svg#moon}"/></svg>Dark
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-theme-set="auto">
+              Auto (System)
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Management Section -->
+    <section class="surface mb-4">
+      <div class="surface-header">
+        <div>
+          <h2 class="section-heading">Data management</h2>
+          <p class="section-caption">Keep a portable copy of records, progress history, links, and uploaded files.</p>
+        </div>
+      </div>
+      <div class="surface-body">
+        <div class="data-actions">
+          <div class="p-3 rounded border bg-light-subtle">
+            <h3 class="section-heading mb-1">Download backup</h3>
+            <p class="description small text-secondary mb-3">Creates a ZIP archive containing all database records, attachments, and reference links.</p>
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/settings/data/backup}">
+              <svg class="btn-icon"><use th:href="@{/images/icons.svg#download}"/></svg>Download full backup
+            </a>
+          </div>
+
+          <form class="p-3 rounded border bg-light-subtle" method="post" enctype="multipart/form-data" th:action="@{/settings/data/restore(_csrf=${_csrf})}" data-confirm="Restore this backup? Current records and attachment references will be replaced.">
+            <input type="hidden" name="_csrf" th:value="${_csrf}">
+            <h3 class="section-heading mb-1">Restore backup</h3>
+            <p class="description small text-secondary mb-3">Restoring replaces current application data after the archive is validated.</p>
+            <div class="mb-2">
+              <label class="form-label small" for="backupFile">Focus backup ZIP</label>
+              <input class="form-control form-control-sm" id="backupFile" name="backup" type="file" accept=".zip,application/zip" required>
+            </div>
+            <button class="btn btn-primary btn-sm" type="submit">Restore backup</button>
+          </form>
+        </div>
+        <hr class="my-4">
+        <div class="d-flex align-items-center justify-content-between">
+          <span class="text-secondary small">Export all tasks with their progress, links, and attachment details.</span>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/settings/data/tasks.csv}">Export CSV</a>
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/settings/data/tasks.xlsx}">Export Excel</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="surface mb-4">
+      <div class="surface-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+          <h2 class="section-heading mb-1">Reset app</h2>
+          <p class="section-caption mb-0">Permanently clear workspace data and restore the default appearance.</p>
+        </div>
+        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#resetAppModal">
+          Reset app
+        </button>
+      </div>
+    </section>
+
+    <!-- Application Configuration Section -->
+    <section class="surface">
+      <div class="surface-header">
+        <div>
+          <h2 class="section-heading">Application configuration</h2>
+          <p class="section-caption">Runtime environment settings and storage paths.</p>
+        </div>
+      </div>
+      <div class="surface-body">
+        <dl class="mb-0">
+          <div class="key-value"><dt>Local database</dt><dd>Bundled PostgreSQL on port <code>5433</code> (data stored in <code>postgres-data/</code>)</dd></div>
+          <div class="key-value"><dt>Production</dt><dd>Use the <code>prod</code> profile for an externally managed PostgreSQL server</dd></div>
+          <div class="key-value"><dt>Upload limit</dt><dd>No limit</dd></div>
+          <div class="key-value"><dt>Demo records</dt><dd>Controlled by <code>APP_SEED_DEMO_DATA</code></dd></div>
+        </dl>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<div class="modal fade" id="resetAppModal" tabindex="-1" aria-labelledby="resetAppTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" th:action="@{/settings/data/reset}">
+      <input type="hidden" name="_csrf" th:value="${_csrf}">
+      <input type="hidden" name="confirmed" value="true">
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="resetAppTitle">Reset app?</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>This permanently deletes all tasks, categories, progress history, uploaded files, and links, including archived items.</p>
+        <p class="mb-0">Download a backup first if you want to keep a copy.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-danger">Reset app</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+  const focusBrowse = document.getElementById('focusBrowse');
+  focusBrowse.addEventListener('click', async () => {
+    const status = document.getElementById('focusBrowseStatus');
+    const token = focusBrowse.form.elements.namedItem('_csrf').value;
+    focusBrowse.disabled = true;
+    status.textContent = '';
+    try {
+      const response = await fetch(focusBrowse.dataset.url, {
+        method: 'POST',
+        body: new URLSearchParams({_csrf: token})
+      });
+      if (!response.ok) throw new Error('Folder picker unavailable');
+      const data = await response.json();
+      if (data.folder) document.getElementById('focusFolder').value = data.folder;
+    } catch {
+      status.textContent = 'Enter the full folder path to choose a location.';
+    } finally {
+      focusBrowse.disabled = false;
+    }
+  });
+  (function() {
+    var shareInput = document.getElementById('settingsShareLinkInput');
+    if (shareInput) {
+      shareInput.value = window.location.origin + '/download';
+    }
+  })();
+  function copySettingsShareLink(btn) {
+    var input = document.getElementById('settingsShareLinkInput');
+    if (!input) return;
+    navigator.clipboard.writeText(input.value).then(function() {
+      var label = document.getElementById('settingsCopyBtnLabel');
+      var alertBox = document.getElementById('settingsCopyAlert');
+      if (label) label.textContent = 'Copied!';
+      if (alertBox) alertBox.style.display = 'block';
+      setTimeout(function() {
+        if (label) label.textContent = 'Copy link';
+      }, 2500);
+    }).catch(function() {
+      input.select();
+      document.execCommand('copy');
+    });
+  }
+</script>
+</body>
+</html>

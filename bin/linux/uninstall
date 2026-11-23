@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+# Focus Productivity Tracker - Linux Uninstaller Executable
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BIN_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+PROJECT_DIR="$(cd "${BIN_DIR}/.." && pwd)"
+
+PID_FILE="${PROJECT_DIR}/storage/focus.pid"
+LOG_FILE="${PROJECT_DIR}/storage/logs/focus.log"
+
+USER_SYSTEMD="${HOME}/.config/systemd/user/focus.service"
+SYSTEM_SYSTEMD="/etc/systemd/system/focus.service"
+
+USER_DESKTOP="${HOME}/.local/share/applications/focus.desktop"
+SYSTEM_DESKTOP="/usr/share/applications/focus.desktop"
+
+FORCE=false
+PURGE=false
+QUIET=false
+TARGET_MODE="all"
+
+usage() {
+    cat <<EOF
+Focus Productivity Tracker - Linux Uninstaller
+
+Usage:
+  $(basename "$0") [options]
+
+Options:
+  -f, --force       Non-interactive mode (do not prompt for confirmation)
+  -p, --purge       Purge all user data, database, and settings (irreversible)
+  --keep-data       Keep user data and database intact (default behavior)
+  --user            Target only user-level systemd service
+  --system          Target only system-level systemd service
+  -q, --quiet       Suppress status messages
+  -h, --help        Show this help message
+EOF
+    exit 0
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -f|--force|-y|--yes)
+            FORCE=true
+            shift
+            ;;
+        -p|--purge)
+            PURGE=true
+            shift
+            ;;
+        --keep-data)
+            PURGE=false
+            shift
+            ;;
+        --user)
+            TARGET_MODE="user"
+            shift
+            ;;
+        --system)
+            TARGET_MODE="system"
+            shift
+            ;;
+        -q|--quiet)
+            QUIET=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            usage
+            ;;
+    esac
+done
+
+log() {
+    if [[ "${QUIET}" != "true" ]]; then
+        echo "$@"
+    fi
+}
+
+log "========================================================"
+log "   Focus Productivity Tracker - Linux Uninstaller"
+log "========================================================"
+
+if [[ "${FORCE}" != "true" ]]; then
+    if [[ "${PURGE}" == "true" ]]; then
+        read -r -p "WARNING: --purge is set. This will permanently remove all productivity data and database! Proceed? [y/N]: " confirm
+    else
+        read -r -p "Are you sure you want to uninstall Focus? (Your data will be preserved) [y/N]: " confirm
+    fi
+    case "${confirm}" in
+        [yY][eE][sS]|[yY]) ;;
+        *)
+            log "Uninstallation cancelled."
+            exit 0
+            ;;
+    esac
+fi
+
+# 1. Stop background service & running processes
+log ""
+log "[1/5] Stopping active Focus processes..."
+if [[ -f "${SCRIPT_DIR}/focus" ]]; then
+    "${SCRIPT_DIR}/focus" stop 2>/dev/null || true
+fi
+
+if [[ -f "${PID_FILE}" ]]; then
+    PID=$(cat "${PID_FILE}" 2>/dev/null || true)
+    if [[ -n "${PID}" ]] && kill -0 "${PID}" 2>/dev/null; then
+        log "Terminating Focus process (PID: ${PID})..."
+        kill -15 "${PID}" 2>/dev/null || true
+        sleep 2
+        kill -9 "${PID}" 2>/dev/null || true
+    fi
+    rm -f "${PID_FILE}"
+fi
+
+pkill -f "focus\.jar" 2>/dev/null || true
+
+# 2. Remove systemd services
+log "[2/5] Removing systemd service units..."
+if [[ "${TARGET_MODE}" == "all" || "${TARGET_MODE}" == "user" ]]; then
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl --user stop focus 2>/dev/null || true
+        systemctl --user disable focus 2>/dev/null || true
+    fi
+    if [[ -f "${USER_SYSTEMD}" ]]; then
+        rm -f "${USER_SYSTEMD}"
+        log "Removed user service: ${USER_SYSTEMD}"
+    fi
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl --user daemon-reload 2>/dev/null || true
+    fi
+fi
+
+if [[ "${TARGET_MODE}" == "all" || "${TARGET_MODE}" == "system" ]]; then
+    if [[ -f "${SYSTEM_SYSTEMD}" ]]; then
+        if command -v systemctl >/dev/null 2>&1; then
+            systemctl stop focus 2>/dev/null || sudo systemctl stop focus 2>/dev/null || true
+            systemctl disable focus 2>/dev/null || sudo systemctl disable focus 2>/dev/null || true
+        fi
+        rm -f "${SYSTEM_SYSTEMD}" 2>/dev/null || sudo rm -f "${SYSTEM_SYSTEMD}" 2>/dev/null || true
+        log "Removed system service: ${SYSTEM_SYSTEMD}"
+        if command -v systemctl >/dev/null 2>&1; then
+            systemctl daemon-reload 2>/dev/null || sudo systemctl daemon-reload 2>/dev/null || true
+        fi
+    fi
+fi
+
+# 3. Remove Desktop entries and symlinks
+log "[3/5] Cleaning desktop shortcuts and CLI symlinks..."
+rm -f "${USER_DESKTOP}" 2>/dev/null || true
+rm -f "${SYSTEM_DESKTOP}" 2>/dev/null || sudo rm -f "${SYSTEM_DESKTOP}" 2>/dev/null || true
+rm -f "${HOME}/.local/bin/focus" 2>/dev/null || true
+rm -f "/usr/local/bin/focus" 2>/dev/null || sudo rm -f "/usr/local/bin/focus" 2>/dev/null || true
+
+# 4. Clean runtime logs
+log "[4/5] Cleaning runtime logs..."
+rm -f "${PID_FILE}"
+rm -f "${LOG_FILE}"
+
+# 5. Handle user data / purge
+log "[5/5] Checking user data & storage..."
+if [[ "${PURGE}" == "true" ]]; then
+    log "Purging user data and database..."
+    rm -rf "${PROJECT_DIR}/storage"
+    rm -rf "${PROJECT_DIR}/postgres-data"
+    log "User data and database purged."
+else
+    log "User data preserved in:"
+    log "  - ${PROJECT_DIR}/storage"
+    log "  - ${PROJECT_DIR}/postgres-data"
+fi
+
+log ""
+log "========================================================"
+log "   Focus has been successfully uninstalled from Linux!"
+log "========================================================"
+exit 0

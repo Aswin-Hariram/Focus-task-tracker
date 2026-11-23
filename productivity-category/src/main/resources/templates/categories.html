@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<aside th:replace="~{fragments/layout :: sidebar}"></aside>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main class="page-shell">
+  <div class="page-container">
+
+    <!-- Hero Banner with Cyan Nature Illustration -->
+    <div class="page-hero-banner hero-banner-cyan">
+      <div class="hero-banner-content">
+        <h1 class="hero-banner-title">Categories</h1>
+        <p class="hero-banner-subtitle">Organize and filter tasks, Kanban boards, completed history, and productivity reports.</p>
+        <div class="hero-banner-actions">
+          <div class="btn-group shadow-sm" role="group" aria-label="Category filters">
+            <a th:href="@{/categories(filter='all')}" class="btn btn-outline-secondary btn-sm" th:classappend="${filter == 'all' or filter == null} ? ' active' : ''">All</a>
+            <a th:href="@{/categories(filter='active')}" class="btn btn-outline-secondary btn-sm" th:classappend="${filter == 'active'} ? ' active' : ''">Active</a>
+            <a th:href="@{/categories(filter='archived')}" class="btn btn-outline-secondary btn-sm" th:classappend="${filter == 'archived'} ? ' active' : ''">Archived</a>
+          </div>
+          <a class="btn btn-primary btn-sm shadow-sm" th:href="@{/tasks}">
+            <svg class="btn-icon"><use th:href="@{/images/icons.svg#check-square}"/></svg>Tasks view
+          </a>
+        </div>
+      </div>
+      <div th:replace="~{fragments/layout :: heroIllustration}"></div>
+    </div>
+
+    <!-- 3 Pastel Metric Summary Cards -->
+    <section class="metrics-grid" aria-label="Category metrics summary">
+      <!-- Stat 1: Total categories -->
+      <article class="surface metric-card metric-card-blue">
+        <div class="d-flex align-items-center justify-content-between">
+          <span class="metric-card-label mt-0">Total categories</span>
+          <div class="metric-icon-box icon-box-blue">
+            <svg><use th:href="@{/images/icons.svg#tag}"/></svg>
+          </div>
+        </div>
+        <div class="metric-card-value" th:text="${categories.size()}">0</div>
+        <div class="metric-card-note">In current filter view</div>
+      </article>
+
+      <!-- Stat 2: Active categories -->
+      <article class="surface metric-card metric-card-green">
+        <div class="d-flex align-items-center justify-content-between">
+          <span class="metric-card-label mt-0">Active categories</span>
+          <div class="metric-icon-box icon-box-green">
+            <svg><use th:href="@{/images/icons.svg#check-circle}"/></svg>
+          </div>
+        </div>
+        <div class="metric-card-value text-success" th:text="${categories.?[!archived].size()}">0</div>
+        <div class="metric-card-note">Available for new tasks</div>
+      </article>
+
+      <!-- Stat 3: Archived categories -->
+      <article class="surface metric-card metric-card-amber">
+        <div class="d-flex align-items-center justify-content-between">
+          <span class="metric-card-label mt-0">Archived</span>
+          <div class="metric-icon-box icon-box-amber">
+            <svg viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+          </div>
+        </div>
+        <div class="metric-card-value" th:text="${categories.?[archived].size()}">0</div>
+        <div class="metric-card-note">Inactive categories</div>
+      </article>
+
+      <!-- Stat 4: Organization score -->
+      <article class="surface metric-card metric-card-cyan">
+        <div class="d-flex align-items-center justify-content-between">
+          <span class="metric-card-label mt-0">Status</span>
+          <div class="metric-icon-box icon-box-cyan">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+        </div>
+        <div class="metric-card-value" style="font-size:1.35rem;font-weight:700;">Custom tags</div>
+        <div class="metric-card-note">Distinct visual accents</div>
+      </article>
+    </section>
+
+    <!-- Two-Column Grid: Category List + Create/Edit Form -->
+    <div class="detail-grid">
+      <!-- Left Column: Category List Table -->
+      <section class="surface">
+        <div class="surface-header">
+          <div>
+            <h2 class="section-heading">Category list</h2>
+            <p class="section-caption" th:text="${categories.size() + (categories.size() == 1 ? ' category' : ' categories')}">0 categories</p>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table data-table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Color</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="item : ${categories}">
+                <td>
+                  <span class="category-mark">
+                    <i class="category-dot" th:style="'--category-color:' + ${item.color}"></i>
+                    <strong th:text="${item.name}">Name</strong>
+                  </span>
+                </td>
+                <td class="tabular">
+                  <span class="d-inline-flex align-items-center gap-1 font-monospace" style="font-size:0.85rem;">
+                    <span class="category-dot-preview" th:style="'background-color:' + ${item.color}"></span>
+                    <span th:text="${item.color}">#000000</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="status-pill" th:classappend="${item.archived} ? ' status-YET_TO_START' : ' status-COMPLETED'" th:text="${item.archived ? 'Archived' : 'Active'}">Active</span>
+                </td>
+                <td class="text-end">
+                  <div class="d-inline-flex gap-1 justify-content-end">
+                    <a class="btn btn-outline-secondary btn-sm py-1 px-2" style="font-size:.8rem;" th:href="@{/categories(edit=${item.id},filter=${filter})}">
+                      <svg class="btn-icon"><use th:href="@{/images/icons.svg#edit}"/></svg>Edit
+                    </a>
+                    <form method="post" th:action="@{/categories/{id}/toggle(id=${item.id})}">
+                      <input type="hidden" name="_csrf" th:value="${_csrf}">
+                      <button class="btn btn-outline-secondary btn-sm py-1 px-2" style="font-size:.8rem;" type="submit" th:text="${item.archived ? 'Restore' : 'Archive'}">Archive</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              <tr th:if="${categories.isEmpty()}">
+                <td colspan="4" class="text-center text-muted py-5">
+                  <div class="empty-state p-0">
+                    <svg><use th:href="@{/images/icons.svg#tag}"/></svg>
+                    <h2>No categories found</h2>
+                    <p>No categories match the selected filter. Create one using the form.</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Right Column: Add / Edit Category Aside -->
+      <aside class="surface">
+        <div class="surface-header">
+          <h2 class="section-heading" th:text="${isEditing ? 'Edit category' : 'Add category'}">Add category</h2>
+        </div>
+        <form class="surface-body" method="post" th:action="@{/categories}" th:object="${categoryForm}"
+              th:attr="data-confirm=${isEditing ? 'Save modifications to this category?' : null}">
+          <input type="hidden" name="_csrf" th:value="${_csrf}">
+          <input type="hidden" th:field="*{id}">
+          <input type="hidden" th:field="*{archived}">
+
+          <div class="mb-3">
+            <label class="form-label" for="categoryName">Category name</label>
+            <input class="form-control" id="categoryName" th:field="*{name}" maxlength="60" th:classappend="${#fields.hasErrors('name')} ? ' is-invalid'" placeholder="e.g. Work, Personal, Learning" autofocus>
+            <div class="invalid-feedback" th:errors="*{name}">Error</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="categoryColor">Color accent</label>
+            <div class="d-flex align-items-center gap-2">
+              <input class="form-control form-control-color" id="categoryColor" type="color" th:field="*{color}" title="Choose category color" style="width:3.2rem;height:2.6rem;">
+              <span class="text-secondary small">Pick a brand or category indicator color</span>
+            </div>
+            <div class="invalid-feedback" th:errors="*{color}">Error</div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <a th:if="${isEditing}" th:href="@{/categories(filter=${filter})}" class="btn btn-outline-secondary flex-fill">Cancel</a>
+            <button class="btn btn-primary flex-fill" type="submit" th:text="${isEditing ? 'Save changes' : 'Add category'}">Save category</button>
+          </div>
+        </form>
+      </aside>
+    </div>
+
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/categories.js(v='1.0.0')}"></script>
+</body>
+</html>

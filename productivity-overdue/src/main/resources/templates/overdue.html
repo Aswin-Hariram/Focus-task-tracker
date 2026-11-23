@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}">
+</head>
+<body>
+<aside th:replace="~{fragments/layout :: sidebar}"></aside>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main class="page-shell">
+  <div class="page-container overdue-page">
+
+    <header class="overdue-header">
+      <h1 class="overdue-title">Overdue Tasks</h1>
+      <p class="overdue-subtitle">Tasks that have passed their due date and need your attention.</p>
+    </header>
+
+    <section class="dashboard-metrics-grid summary-metrics mb-4" aria-label="Overdue summary statistics">
+      <article class="metric-card metric-card-red surface">
+        <div class="metric-card-top">
+          <div class="metric-icon-box icon-box-red">
+            <svg aria-hidden="true"><use th:href="@{/images/icons.svg#warning}"/></svg>
+          </div>
+        </div>
+        <div class="metric-card-body">
+          <span class="metric-card-label">Total overdue</span>
+          <div class="metric-card-value" th:text="${overdueTasks.size()}">0</div>
+          <div class="metric-card-note">Tasks past the due date</div>
+        </div>
+      </article>
+      <article class="metric-card metric-card-amber surface">
+        <div class="metric-card-top">
+          <div class="metric-icon-box icon-box-amber">
+            <svg aria-hidden="true"><use th:href="@{/images/icons.svg#target}"/></svg>
+          </div>
+        </div>
+        <div class="metric-card-body">
+          <span class="metric-card-label">High priority</span>
+          <div class="metric-card-value" th:text="${overdueTasks.?[task.priority.name() == 'HIGH'].size()}">0</div>
+          <div class="metric-card-note">Overdue high priority tasks</div>
+        </div>
+      </article>
+      <article class="metric-card metric-card-blue surface">
+        <div class="metric-card-top">
+          <div class="metric-icon-box icon-box-blue">
+            <svg aria-hidden="true"><use th:href="@{/images/icons.svg#calendar}"/></svg>
+          </div>
+        </div>
+        <div class="metric-card-body">
+          <span class="metric-card-label">Oldest overdue</span>
+          <div class="metric-card-value" th:text="${overdueTasks.isEmpty() ? '0 days' : overdueTasks[0].daysOverdue + (overdueTasks[0].daysOverdue == 1 ? ' day' : ' days')}">0 days</div>
+          <div class="metric-card-note" th:text="${overdueTasks.isEmpty() ? 'No overdue tasks' : 'Since ' + #temporals.format(overdueTasks[0].task.deadline, 'd MMM yyyy')}">No overdue tasks</div>
+        </div>
+      </article>
+      <article class="metric-card metric-card-green surface">
+        <div class="metric-card-top">
+          <div class="metric-icon-box icon-box-green">
+            <svg aria-hidden="true"><use th:href="@{/images/icons.svg#clock}"/></svg>
+          </div>
+        </div>
+        <div class="metric-card-body">
+          <span class="metric-card-label">Avg. delay</span>
+          <div class="metric-card-value" th:text="${avgDelay != null ? avgDelay + ' days' : '0.0 days'}">0.0 days</div>
+          <div class="metric-card-note">Average overdue duration</div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Priority Filter Pills Tabs Row -->
+    <div class="overdue-pills-row d-flex align-items-center gap-2 mb-3">
+      <button type="button" class="overdue-pill-tab active" data-priority-filter="ALL" aria-pressed="true">
+        <svg class="pill-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span>All overdue</span>
+        <span class="pill-badge" th:text="'(' + ${overdueTasks.size()} + ')'">(6)</span>
+      </button>
+
+      <button type="button" class="overdue-pill-tab" data-priority-filter="HIGH" aria-pressed="false">
+        <span class="dot-indicator dot-red"></span>
+        <span>High</span>
+        <span class="pill-badge" th:text="'(' + ${overdueTasks.?[task.priority.name() == 'HIGH'].size()} + ')'">(2)</span>
+      </button>
+
+      <button type="button" class="overdue-pill-tab" data-priority-filter="MEDIUM" aria-pressed="false">
+        <span class="dot-indicator dot-amber"></span>
+        <span>Medium</span>
+        <span class="pill-badge" th:text="'(' + ${overdueTasks.?[task.priority.name() == 'MEDIUM'].size()} + ')'">(3)</span>
+      </button>
+
+      <button type="button" class="overdue-pill-tab" data-priority-filter="LOW" aria-pressed="false">
+        <span class="dot-indicator dot-green"></span>
+        <span>Low</span>
+        <span class="pill-badge" th:text="'(' + ${overdueTasks.?[task.priority.name() == 'LOW'].size()} + ')'">(1)</span>
+      </button>
+    </div>
+
+    <!-- Filter & Sort Toolbar Row -->
+    <div class="overdue-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+      <!-- Left side dropdown filters -->
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <div class="custom-select-wrapper">
+          <select class="form-select form-select-sm custom-select-pill" id="filterCategory" aria-label="Filter by category">
+            <option value="">All categories</option>
+            <option th:each="cat : ${categories}" th:value="${cat.name}" th:text="${cat.name}" th:selected="${cat.id == selectedCategory}">Category</option>
+          </select>
+        </div>
+
+        <div class="custom-select-wrapper">
+          <select class="form-select form-select-sm custom-select-pill" id="filterPrioritySelect" aria-label="Filter by priority">
+            <option value="">All priorities</option>
+            <option value="HIGH">High</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="LOW">Low</option>
+          </select>
+        </div>
+
+        <div class="custom-select-wrapper">
+          <select class="form-select form-select-sm custom-select-pill" id="filterDelaySelect" aria-label="Filter by delay duration">
+            <option value="">Delay: All</option>
+            <option value="1">> 1 day</option>
+            <option value="3">> 3 days</option>
+            <option value="7">> 7 days</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Right side sorting and utility action buttons -->
+      <div class="d-flex align-items-center gap-2">
+        <div class="custom-select-wrapper">
+          <select class="form-select form-select-sm custom-select-pill" id="sortSelect" aria-label="Sort tasks">
+            <option value="delay-desc">Sort by: Delay (Desc)</option>
+            <option value="delay-asc">Sort by: Delay (Asc)</option>
+            <option value="date-asc">Sort by: Due date</option>
+            <option value="priority-desc">Sort by: Priority</option>
+          </select>
+        </div>
+
+        <button class="btn btn-icon-square" type="button" title="Reset all filters" id="resetFiltersBtn" aria-label="Reset filters">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+          </svg>
+        </button>
+
+        <button class="btn btn-icon-square" type="button" title="Export CSV" id="exportCsvBtn" aria-label="Export to CSV">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Tasks Table Card -->
+    <div class="overdue-table-card surface shadow-sm mb-4">
+      <div class="table-responsive" th:if="${!overdueTasks.isEmpty()}">
+        <table class="table overdue-table align-middle mb-0" id="overdueTasksTable">
+          <thead>
+            <tr>
+              <th class="th-checkbox">
+                <input type="checkbox" class="custom-form-checkbox" id="selectAllCheckbox" aria-label="Select all tasks" title="Select all tasks">
+              </th>
+              <th class="th-task">Task</th>
+              <th class="th-category">Category</th>
+              <th class="th-priority">Priority</th>
+              <th class="th-date">Due date</th>
+              <th class="th-delay">Overdue by</th>
+              <th class="th-progress">Progress</th>
+              <th class="th-action text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody id="overdueTableBody">
+            <tr th:each="item : ${overdueTasks}"
+                class="overdue-task-row"
+                th:data-task-id="${item.task.id}"
+                th:data-priority="${item.task.priority.name()}"
+                th:data-category="${item.task.category != null ? item.task.category.name : ''}"
+                th:data-days-overdue="${item.daysOverdue}"
+                th:data-deadline="${item.task.deadline}">
+              <td class="td-checkbox">
+                <input type="checkbox" class="custom-form-checkbox task-row-checkbox" th:value="${item.task.id}" aria-label="Mark task as completed" title="Mark task as completed">
+              </td>
+
+              <!-- Task info (Title + Description) -->
+              <td class="td-task">
+                <div class="task-info-cell">
+                  <a th:href="@{/tasks/{id}(id=${item.task.id})}" class="task-title-link" th:text="${item.task.name}">Submit project report</a>
+                  <p class="task-desc-text" th:if="${item.task.description != null and !item.task.description.isBlank()}" th:text="${item.task.description}">Finalize and submit the project documentation.</p>
+                </div>
+              </td>
+
+              <!-- Category dot + name -->
+              <td class="td-category">
+                <span class="category-pill-inline" th:if="${item.task.category != null}">
+                  <i class="category-dot" th:style="'--category-color:' + ${item.task.category.color}"></i>
+                  <span class="category-name-text" th:text="${item.task.category.name}">Work</span>
+                </span>
+                <span class="text-muted small" th:unless="${item.task.category != null}">—</span>
+              </td>
+
+              <!-- Priority pill -->
+              <td class="td-priority">
+                <span th:class="'priority-pill priority-' + ${item.task.priority}" th:text="${#strings.capitalize(#strings.toLowerCase(item.task.priority))}">High</span>
+              </td>
+
+              <!-- Due date with calendar icon -->
+              <td class="td-date tabular">
+                <span class="date-cell-inline">
+                  <svg class="date-cell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <span th:text="${#temporals.format(item.task.deadline, 'd MMM yyyy')}">15 Nov 2026</span>
+                </span>
+              </td>
+
+              <!-- Overdue by pill -->
+              <td class="td-delay">
+                <span class="overdue-delay-badge" th:text="${item.daysOverdue + (item.daysOverdue == 1 ? ' day' : ' days')}">7 days</span>
+              </td>
+
+              <!-- Progress bar + percentage -->
+              <td class="td-progress" th:with="pct=${item.task.status.name() == 'COMPLETED' ? 100 : (item.task.status.name() == 'IN_PROGRESS' ? (item.task.progressUpdateCount > 0 ? 60 : 50) : 0)}">
+                <div class="progress-cell-group d-flex align-items-center gap-2">
+                  <div class="table-progress-track flex-grow-1">
+                    <div class="table-progress-fill" th:style="'width:' + ${pct} + '%;'"></div>
+                  </div>
+                  <span class="table-progress-pct" th:text="${pct} + '%'">40%</span>
+                </div>
+              </td>
+
+              <!-- Action buttons -->
+              <td class="td-action text-end">
+                <div class="d-inline-flex align-items-center gap-1 justify-content-end">
+                  <a th:href="@{/tasks/{id}(id=${item.task.id})}" class="btn-take-action" title="View task details">
+                    <span>Take action</span>
+                    <svg class="action-arrow-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </a>
+
+                  <!-- More options dropdown button -->
+                  <div class="dropdown d-inline-block">
+                    <button class="btn-more-options" type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" title="More options" aria-label="More options">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <circle cx="5" cy="12" r="2"/>
+                        <circle cx="12" cy="12" r="2"/>
+                        <circle cx="19" cy="12" r="2"/>
+                      </svg>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                      <li>
+                        <form method="post" th:action="@{/tasks/{id}/status(id=${item.task.id})}" th:data-task-id="${item.task.id}">
+                          <input type="hidden" name="_csrf" th:value="${_csrf}">
+                          <input type="hidden" name="status" value="COMPLETED">
+                          <input type="hidden" name="redirectUrl" value="/overdue">
+                          <button class="dropdown-item d-flex align-items-center gap-2" type="submit">
+                            <svg style="width:14px;height:14px;color:var(--color-success,#16a34a);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                            Mark as completed
+                          </button>
+                        </form>
+                      </li>
+                      <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2" th:href="@{/tasks/{id}/edit(id=${item.task.id})}">
+                          <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          Reschedule task
+                        </a>
+                      </li>
+                      <li><hr class="dropdown-divider"></li>
+                      <li>
+                        <form method="post" th:action="@{/tasks/{id}/delete(id=${item.task.id})}" data-confirm="Permanently delete this overdue task? This action cannot be undone.">
+                          <input type="hidden" name="_csrf" th:value="${_csrf}">
+                          <input type="hidden" name="redirectUrl" value="/overdue">
+                          <button class="dropdown-item text-danger d-flex align-items-center gap-2" type="submit">
+                            <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            Delete task
+                          </button>
+                        </form>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div class="overdue-empty-state py-5 text-center" th:if="${overdueTasks.isEmpty()}" id="emptyOverdueNotice">
+        <img class="workspace-empty-art mb-3" th:src="@{/images/empty-overdue.svg}" alt="" style="max-width:180px;">
+        <h2 class="h5 fw-bold mb-1">No overdue tasks</h2>
+        <p class="text-muted small mb-3">All active tasks are currently on schedule.</p>
+        <a class="btn btn-primary btn-sm" th:href="@{/tasks}">Browse all tasks</a>
+      </div>
+
+      <!-- No Matching Filter Search Results Message -->
+      <div class="overdue-empty-state py-5 text-center d-none" id="noFilterResultsNotice">
+        <div class="empty-icon-circle mb-3 mx-auto">
+          <svg style="width:24px;height:24px;color:var(--color-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <h2 class="h6 fw-bold mb-1">No tasks match these filters</h2>
+        <p class="text-muted small mb-2">Try clearing priority or category filters.</p>
+        <button class="btn btn-outline-secondary btn-sm" type="button" id="clearSearchFiltersBtn">Clear filters</button>
+      </div>
+
+      <!-- Table Footer / Pagination -->
+      <div class="overdue-table-footer d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-3" th:if="${!overdueTasks.isEmpty()}">
+        <span class="table-pagination-info" id="paginationInfo"
+              th:text="'Showing 1 - ' + ${overdueTasks.size()} + ' of ' + ${overdueTasks.size()} + ' overdue tasks'">
+          Showing 1 - 3 of 3 overdue tasks
+        </span>
+        <div class="pagination-controls d-flex align-items-center gap-1">
+          <button class="btn-pagination-nav" id="prevPageBtn" disabled aria-label="Previous page">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <button class="btn-pagination-page active" aria-current="page">1</button>
+          <button class="btn-pagination-nav" id="nextPageBtn" disabled aria-label="Next page">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/overdue.js(v='1.2.0')}"></script>
+</body>
+</html>

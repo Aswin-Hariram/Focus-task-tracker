@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<aside th:replace="~{fragments/layout :: sidebar}"></aside>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main class="page-shell">
+  <div class="page-container board-container">
+
+    <header class="board-heading mb-4">
+      <h1>Daily board</h1>
+      <p>Track today’s work across statuses and browse planned work by date.</p>
+    </header>
+
+<!--    <section class="board-stats-card surface mb-4" aria-label="Board overview">-->
+<!--      &lt;!&ndash; Stat 1: Total tasks &ndash;&gt;-->
+<!--      <div class="board-stat-item">-->
+<!--        <div class="board-stat-icon icon-box-blue">-->
+<!--          <svg><use th:href="@{/images/icons.svg#clipboard}"/></svg>-->
+<!--        </div>-->
+<!--        <div class="board-stat-value" th:text="${totalTasks}">6</div>-->
+<!--        <div class="board-stat-label">Total tasks</div>-->
+<!--      </div>-->
+
+<!--      &lt;!&ndash; Stat 2: Completed &ndash;&gt;-->
+<!--      <div class="board-stat-item">-->
+<!--        <div class="board-stat-icon icon-box-green">-->
+<!--          <svg><use th:href="@{/images/icons.svg#check}"/></svg>-->
+<!--        </div>-->
+<!--        <div class="board-stat-value" th:text="${completedTasks}">2</div>-->
+<!--        <div class="board-stat-label">Completed</div>-->
+<!--      </div>-->
+
+<!--      &lt;!&ndash; Stat 3: Completion Donut &ndash;&gt;-->
+<!--      <div class="board-stat-item board-stat-donut">-->
+<!--        <div class="donut-container">-->
+<!--          <svg viewBox="0 0 56 56" class="donut-chart" aria-hidden="true">-->
+<!--            <circle cx="28" cy="28" r="22" class="donut-ring"/>-->
+<!--            <circle cx="28" cy="28" r="22" class="donut-segment"-->
+<!--                    stroke-dasharray="138.23"-->
+<!--                    th:attr="stroke-dashoffset=${138.23 - (138.23 * boardCompletionPct / 100.0)}"-->
+<!--                    transform="rotate(-90 28 28)"/>-->
+<!--          </svg>-->
+<!--          <div class="donut-center-value" th:text="|${boardCompletionPct}%|">33%</div>-->
+<!--        </div>-->
+<!--        <div class="board-stat-label">Completion</div>-->
+<!--      </div>-->
+<!--    </section>-->
+
+    <section class="board-active-timer mb-4" aria-labelledby="boardTimerTitle"
+             id="boardActiveTimerSection"
+             th:data-active-count="${boardActiveCount}">
+      <header class="board-active-timer-header">
+        <span class="board-timer-icon" aria-hidden="true"><svg><use th:href="@{/images/icons.svg#layers}"/></svg></span>
+        <div>
+          <h2 id="boardTimerTitle" th:text="${'Active timers (' + boardActiveCount + ')'}">Active timers</h2>
+          <p>Track multiple tasks running at the same time.</p>
+        </div>
+        <div class="dropdown ms-auto" th:unless="${boardTimerCandidates.isEmpty()}">
+          <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#plus}"/></svg>
+            <span data-board-timer-start-label th:text="${boardActiveCount == 0 ? 'Start a task' : 'Start another task'}">Start a task</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end board-timer-task-menu">
+            <li th:each="candidate : ${boardTimerCandidates}">
+              <form method="post" th:action="@{/tasks/{id}/timer/start(id=${candidate.id})}" class="board-timer-quick-start-form">
+                <input type="hidden" name="_csrf" th:value="${_csrf}">
+                <button type="submit" class="dropdown-item text-wrap" th:text="${candidate.name}">Task</button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      </header>
+
+      <div class="board-active-timers-list" id="boardActiveTimersContainer" th:unless="${boardActiveTimerViews.isEmpty()}">
+        <div class="board-active-timer-body mb-2" th:each="view : ${boardActiveTimerViews}"
+             th:data-active-task-id="${view.task.id}"
+             th:data-session-seconds="${view.sessionSeconds}"
+             th:data-today-base-seconds="${view.todayBaseSeconds}"
+             th:data-timer-day-start="${timerDayStart}" th:data-timer-next-day-start="${timerNextDayStart}"
+             th:data-timer-started="${view.task.timerStartedAtMillis}"
+             th:data-timer-accumulated="${view.task.timerAccumulatedSeconds}">
+          <div class="board-timer-clock">
+            <strong data-board-session th:text="${view.sessionClock}">00:00:00</strong>
+            <span>Current session</span>
+          </div>
+          <div class="board-timer-task">
+            <span class="board-timer-running">Working on</span>
+            <a class="board-timer-task-name" th:href="@{/tasks/{id}(id=${view.task.id})}" th:text="${view.task.name}">Task</a>
+            <div class="board-timer-chips">
+              <span class="category-pill" th:text="${view.task.category.name}">Category</span>
+              <span th:class="|priority-pill priority-${view.task.priority}|" th:text="|${view.task.priority.label} priority|">Priority</span>
+            </div>
+          </div>
+          <dl class="board-timer-facts">
+            <div th:if="${view.task.timerStartedAt != null}">
+              <dt><svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#calendar}"/></svg>Started</dt>
+              <dd th:text="${#temporals.format(view.task.timerStartedAt, 'h:mm a')}">Time</dd>
+            </div>
+            <div>
+              <dt><svg class="btn-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#clock}"/></svg>Total today</dt>
+              <dd data-board-today th:text="${view.todayClock}">00:00:00</dd>
+            </div>
+          </dl>
+          <div class="board-timer-actions">
+            <form method="post" th:action="@{/tasks/{id}/timer/pause(id=${view.task.id})}" class="board-timer-action-form">
+              <input type="hidden" name="_csrf" th:value="${_csrf}">
+              <button type="submit" class="btn btn-outline-secondary btn-sm" title="Pause timer">
+                <svg class="btn-icon" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>Pause
+              </button>
+            </form>
+            <form method="post" th:action="@{/tasks/{id}/timer/stop(id=${view.task.id})}" class="board-timer-action-form">
+              <input type="hidden" name="_csrf" th:value="${_csrf}">
+              <button type="submit" class="btn btn-outline-danger btn-sm" title="Stop timer">
+                <svg class="btn-icon" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>Stop
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <p class="board-timer-empty" id="boardTimerEmptyMsg" th:if="${boardActiveTimerViews.isEmpty()}">No task timer is running.</p>
+    </section>
+
+    <!-- Toolbar: Category filter on left, Date navigation strip on right -->
+    <div class="board-controls-toolbar mb-4">
+      <form method="get" th:action="@{/board}" class="category-filter-form">
+        <input type="hidden" name="date" th:value="${selectedDate}">
+        <div class="category-select-wrapper">
+          <select class="form-select category-select" name="category" aria-label="Filter by category" onchange="this.form.submit()">
+            <option value="">All categories</option>
+            <option th:each="item : ${categories}" th:value="${item.id}" th:selected="${item.id == selectedCategory}" th:text="${item.name}">Category</option>
+          </select>
+        </div>
+      </form>
+
+      <div class="date-strip-nav">
+        <a class="date-strip-btn" th:href="@{/board(date=${selectedDate.minusDays(1)},category=${selectedCategory})}" aria-label="Previous day">
+          <svg class="btn-icon"><use th:href="@{/images/icons.svg#chevron-left}"/></svg>
+        </a>
+        <form class="date-strip-picker" method="get" th:action="@{/board}">
+          <input th:if="${selectedCategory != null}" type="hidden" name="category" th:value="${selectedCategory}">
+          <button type="button" class="date-strip-current" title="Choose board date" hidden>
+            <svg class="calendar-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#calendar}"/></svg>
+            <span th:text="${selectedDate.equals(today) ? 'Today, ' + #temporals.format(selectedDate, 'd MMMM yyyy') : #temporals.format(selectedDate, 'EEEE, d MMMM yyyy')}">Today, 22 November 2026</span>
+          </button>
+          <input type="date" class="form-control date-strip-input" name="date" th:value="${selectedDate}" aria-label="Board date" required>
+          <noscript><button type="submit" class="btn btn-outline-secondary btn-sm">Go</button></noscript>
+        </form>
+        <a class="date-strip-btn" th:href="@{/board(date=${selectedDate.plusDays(1)},category=${selectedCategory})}" aria-label="Next day">
+          <svg class="btn-icon"><use th:href="@{/images/icons.svg#chevron-right}"/></svg>
+        </a>
+        <a class="date-strip-current date-strip-today" th:if="${!selectedDate.equals(today)}"
+           th:href="@{/board(category=${selectedCategory})}">Today</a>
+      </div>
+    </div>
+
+    <!-- Kanban Columns Grid -->
+    <div class="kanban" aria-label="Task board" th:data-date="${selectedDate}">
+      <section class="kanban-column"
+               th:each="status : ${statuses}"
+               th:classappend="${status.name() == 'YET_TO_START'} ? ' column-yet-to-start' : (${status.name() == 'IN_PROGRESS'} ? ' column-in-progress' : ' column-completed')"
+               th:data-status="${status.name()}">
+        <div class="kanban-heading">
+          <div class="d-flex align-items-center gap-2">
+            <!-- Distinct Column Icon -->
+            <svg th:if="${status.name() == 'YET_TO_START'}" class="col-status-icon icon-yet-to-start" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9"/>
+            </svg>
+            <svg th:if="${status.name() == 'IN_PROGRESS'}" class="col-status-icon icon-in-progress">
+              <use th:href="@{/images/icons.svg#hourglass}"/>
+            </svg>
+            <svg th:if="${status.name() == 'COMPLETED'}" class="col-status-icon icon-completed">
+              <use th:href="@{/images/icons.svg#check-circle}"/>
+            </svg>
+            <h2 th:text="${status.label}">Status</h2>
+          </div>
+          <span class="col-count-badge"
+                th:classappend="${status.name() == 'YET_TO_START'} ? ' badge-blue' : (${status.name() == 'IN_PROGRESS'} ? ' badge-amber' : ' badge-green')"
+                th:text="${board.get(status).size()}">0</span>
+        </div>
+
+        <div class="kanban-list" th:data-status="${status.name()}">
+          <article class="task-card" th:each="task : ${board.get(status)}"
+                   draggable="true"
+                   th:data-task-id="${task.id}"
+                   th:data-task-url="@{/tasks/{id}(id=${task.id})}"
+                   th:data-task-status="${task.status.name()}"
+                   th:data-timer-status="${task.timerStatus.name()}"
+                   th:data-timer-running="${task.timerStatus.name() == 'RUNNING'}"
+                   th:data-timer-started="${task.timerStartedAtMillis}"
+                   th:data-timer-accumulated="${task.timerAccumulatedSeconds}"
+                   th:data-total-seconds="${task.totalTimeSpentSeconds}"
+                   th:data-move-url="@{/board/tasks/{id}/move(id=${task.id})}"
+                   th:classappend="${task.timerStatus.name() == 'RUNNING'} ? ' task-card-timer-active' : ''"
+                   aria-grabbed="false">
+            <!--/* Card Header: Category & Rolled over pills + Menu/Grip */-->
+            <div class="task-card-header d-flex justify-content-between align-items-center mb-2">
+              <div class="d-inline-flex align-items-center gap-1 flex-wrap">
+                <span class="category-pill" th:style="'--cat-color:' + ${task.category.color}">
+                  <i class="category-dot" th:style="'--category-color:' + ${task.category.color}"></i>
+                  <span th:text="${task.category.name}">Category</span>
+                </span>
+                <span th:class="'priority-pill priority-' + ${task.priority}" th:text="${#strings.capitalize(#strings.toLowerCase(task.priority))}">Priority</span>
+                <span th:if="${selectedDate.equals(today) and task.plannedDate != null and task.plannedDate.isBefore(today)}"
+                      class="rolled-over-pill"
+                      th:title="'Originally planned for ' + ${#temporals.format(task.plannedDate, 'd MMM')}">Rolled over</span>
+              </div>
+              <div class="d-inline-flex align-items-center gap-1">
+                <span class="board-timer-card-badge board-timer-badge-running"
+                      th:style="${task.timerStatus.name() == 'RUNNING' ? '' : 'display:none;'}">
+                  <span class="timer-live-dot"></span>
+                  <span class="board-card-timer-digits">00:00:00</span>
+                </span>
+                <span class="board-timer-card-badge board-timer-badge-paused"
+                      th:style="${task.timerStatus.name() == 'PAUSED' ? '' : 'display:none;'}">
+                  Paused
+                </span>
+                <span class="drag-handle" title="Drag to move status" aria-hidden="true">
+                  <svg style="width:.85rem;height:.85rem;"><use th:href="@{/images/icons.svg#grip}"/></svg>
+                </span>
+                <a th:href="@{/tasks/{id}(id=${task.id})}" class="card-dots-btn" aria-label="Task options">
+                  <svg viewBox="0 0 24 24" style="width:1rem;height:1rem;" fill="currentColor" stroke="none">
+                    <circle cx="12" cy="5" r="1.75"/>
+                    <circle cx="12" cy="12" r="1.75"/>
+                    <circle cx="12" cy="19" r="1.75"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            <!-- Task Title -->
+            <h3 class="task-card-title mb-1">
+              <a th:href="@{/tasks/{id}(id=${task.id})}" draggable="false" class="text-decoration-none" th:text="${task.name}">Task</a>
+            </h3>
+
+            <!-- Task Description -->
+            <p class="task-card-desc" th:if="${task.description != null and !task.description.isBlank()}" th:text="${task.description}">Description</p>
+
+            <!-- Status & Percentage Progress Row (Clickable to log progress) -->
+            <div class="task-card-progress-section mt-2 mb-2 open-progress-modal-btn"
+                 role="button"
+                 tabindex="0"
+                 style="cursor: pointer;"
+                 th:data-task-id="${task.id}"
+                 th:data-task-name="${task.name}"
+                 title="Click to log progress update">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="task-card-status-label">
+                  <svg class="btn-icon task-card-blocked-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#slash}"/></svg>
+                  <span class="task-card-status-text" th:text="${task.status.label}">Status</span>
+                </span>
+                <span class="task-card-progress-pct" th:text="${task.status.name() == 'COMPLETED' ? '100% completed' : (task.status.name() == 'IN_PROGRESS' ? '50% completed' : '0% completed')}">0% completed</span>
+              </div>
+              <div class="task-progress-track">
+                <div class="task-progress-bar"
+                     th:style="'width:' + (${task.status.name() == 'COMPLETED'} ? '100%' : (${task.status.name() == 'IN_PROGRESS'} ? '50%' : '0%'))"
+                     th:classappend="${task.status.name() == 'COMPLETED' ? 'bg-progress-green' : 'bg-progress-blue'}">
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Footer: Metadata and quick actions -->
+            <div class="task-card-footer d-flex justify-content-between align-items-center mt-3">
+              <div class="d-inline-flex align-items-center gap-2">
+
+                <!-- Due Date / Time -->
+                <span class="task-meta-item" th:classappend="${task.overdue} ? 'danger-text fw-semibold'" th:title="${task.deadline == null ? 'No deadline' : 'Due ' + #temporals.format(task.deadline, 'd MMM yyyy')}">
+                  <svg class="task-meta-icon"><use th:href="@{/images/icons.svg#clock}"/></svg>
+                  <span th:text="${task.deadline == null ? 'No due' : #temporals.format(task.deadline, 'd MMM')}">Date</span>
+                </span>
+
+                <!-- Time Spent -->
+                <span class="task-meta-item task-meta-time"
+                      th:classappend="${task.timerStatus.name() == 'RUNNING'} ? 'timer-active-badge' : ''"
+                      th:title="'Time spent: ' + ${task.formattedTotalTime}">
+                  <svg class="task-meta-icon"><use th:href="@{/images/icons.svg#hourglass}"/></svg>
+                  <span th:text="${task.formattedCompactTime}">0m</span>
+                </span>
+
+                <!-- Progress updates count badge -->
+                <span class="task-meta-item open-progress-modal-btn"
+                      role="button"
+                      tabindex="0"
+                      style="cursor: pointer;"
+                      th:data-task-id="${task.id}"
+                      th:data-task-name="${task.name}"
+                      th:title="${task.progressUpdateCount + ' progress update(s). Click to add progress.'}">
+                  <svg class="task-meta-icon"><use th:href="@{/images/icons.svg#message-square}"/></svg>
+                  <span class="progress-count-val" th:text="${task.progressUpdateCount}">0</span>
+                </span>
+              </div>
+
+              <div class="d-inline-flex align-items-center gap-1">
+                <!-- Card Quick Timer Actions -->
+                <div class="card-timer-btn-group"
+                     th:hidden="${task.status.name() != 'IN_PROGRESS'}">
+                  <!-- Start / Resume Button -->
+                  <form method="post" th:action="@{/tasks/{id}/timer/start(id=${task.id})}" class="card-timer-ajax-form card-timer-start-form"
+                        th:hidden="${task.timerStatus.name() == 'RUNNING'}">
+                    <input type="hidden" name="_csrf" th:value="${_csrf}">
+                    <button type="submit" class="btn btn-action card-timer-action-btn card-timer-btn-play"
+                            th:disabled="${task.timerStatus.name() == 'RUNNING'}"
+                            th:title="${task.timerStatus.name() == 'RUNNING' ? 'Timer is running' : (task.timerStatus.name() == 'PAUSED' ? 'Resume timer' : 'Start timer')}">
+                      <svg class="btn-icon" viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+                      <span class="card-timer-label" th:text="${task.timerStatus.name() == 'PAUSED' ? 'Resume' : 'Timer'}">Timer</span>
+                    </button>
+                  </form>
+
+                </div>
+
+                <!-- Status Action Buttons -->
+                <div class="d-inline-flex gap-1 status-actions">
+                  <div class="dropdown">
+                    <button type="button" class="btn btn-action btn-action-progress dropdown-toggle"
+                            data-bs-toggle="dropdown" aria-expanded="false">Progress</button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                      <li th:each="choice : ${ { {'YET_TO_START', 'Yet to start', 'clock', 'primary'},
+                                                  {'IN_PROGRESS', 'In progress', 'hourglass', 'warning'},
+                                                  {'COMPLETED', 'Complete', 'check', 'success'},
+                                                  {'BLOCKED', 'Blocked/Closed', 'slash', 'danger'},
+                                                  {'', 'Progress update only', 'message-square', 'info'} } }">
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 open-progress-modal-btn"
+                                th:data-progress-status="${choice[0]}">
+                          <svg class="btn-icon progress-action-icon" th:data-progress-tone="${choice[3]}" aria-hidden="true"><use th:href="@{/images/icons.svg} + '#' + ${choice[2]}"/></svg>
+                          <span th:text="${choice[1]}">Progress action</span>
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+          <div class="empty-column" th:if="${board.get(status).isEmpty()}">No tasks in this status.</div>
+        </div>
+      </section>
+    </div>
+
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/board.js(v='1.0.13')}"></script>
+</body>
+</html>

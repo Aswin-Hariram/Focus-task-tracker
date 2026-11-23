@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body class="tasks-page">
+<aside th:replace="~{fragments/layout :: sidebar}"></aside>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main class="page-shell">
+  <div class="page-container">
+    <header class="page-header">
+      <div>
+        <h1 class="page-title">Tasks</h1>
+        <p class="page-subtitle">Manage, track, and organize all your tasks in one place.</p>
+      </div>
+    </header>
+
+    <section class="metrics-grid" aria-label="Task summary">
+      <article th:replace="~{:: metric('Total tasks', ${totalTasks}, 'All matching tasks', 'blue', 'clipboard')}"></article>
+      <article th:replace="~{:: metric('Yet to start', ${taskCounts['YET_TO_START']}, 'Tasks waiting to be started', 'amber', 'arrow')}"></article>
+      <article th:replace="~{:: metric('In progress', ${taskCounts['IN_PROGRESS']}, 'Tasks currently in progress', 'cyan', 'clock')}"></article>
+      <article th:replace="~{:: metric('Completed', ${taskCounts['COMPLETED']}, 'Tasks finished', 'green', 'check-circle')}"></article>
+    </section>
+
+    <details class="surface p-3 mb-3" th:if="${!deletedTasks.isEmpty()}">
+      <summary th:text="|Deleted tasks (${deletedTasks.size()})|">Deleted tasks</summary>
+      <ul class="list-unstyled mb-0 mt-2">
+        <li th:each="deleted : ${deletedTasks}" class="d-flex align-items-center justify-content-between gap-3 py-1">
+          <span th:text="${deleted.name}">Task name</span>
+          <form method="post" th:action="@{/tasks/{id}/undo-delete(id=${deleted.id})}">
+            <input type="hidden" name="_csrf" th:value="${_csrf}">
+            <button type="submit" class="btn btn-outline-secondary btn-sm"
+                    th:attr="aria-label=|Restore ${deleted.name}|">Restore</button>
+          </form>
+        </li>
+      </ul>
+    </details>
+
+    <div class="tasks-navigation">
+      <nav class="tasks-tabs" aria-label="Filter by status">
+        <a class="tab-pill" th:classappend="${selectedStatus == null} ? 'active'"
+           th:attr="aria-current=${selectedStatus == null ? 'page' : null}"
+           th:href="@{/tasks(query=${query},category=${selectedCategory},priority=${selectedPriority},sort=${sort})}">
+          <svg class="tab-icon" aria-hidden="true"><use th:href="@{/images/icons.svg#inbox}"/></svg>
+          <span th:text="|All tasks (${totalTasks})|">All tasks</span>
+        </a>
+        <a th:each="status, index : ${statuses}" class="tab-pill" th:classappend="${status == selectedStatus} ? 'active'"
+           th:attr="aria-current=${status == selectedStatus ? 'page' : null}"
+           th:href="@{/tasks(query=${query},category=${selectedCategory},status=${status},priority=${selectedPriority},sort=${sort})}">
+          <svg class="tab-icon" aria-hidden="true"><use th:attr="href=@{'/images/icons.svg#' + ${index.first ? 'arrow' : (index.last ? 'check' : 'clock')}}"/></svg>
+          <span th:text="|${status.label} (${taskCounts[status.name()]})|">Status</span>
+        </a>
+      </nav>
+      <div class="tasks-view">
+        <span aria-current="page" aria-label="Task list"><svg aria-hidden="true"><use th:href="@{/images/icons.svg#menu}"/></svg></span>
+        <a th:href="@{/board}" aria-label="Open daily board" title="Daily board"><svg aria-hidden="true"><use th:href="@{/images/icons.svg#board}"/></svg></a>
+      </div>
+    </div>
+
+    <section class="surface tasks-results" aria-label="Task results">
+      <form class="tasks-filters" method="get" th:action="@{/tasks}">
+        <input th:if="${query != null}" type="hidden" name="query" th:value="${query}">
+        <select class="form-select" name="category" aria-label="Category">
+          <option value="">All categories</option>
+          <option th:each="item : ${categories}" th:value="${item.id}" th:selected="${item.id == selectedCategory}" th:text="${item.name}">Category</option>
+        </select>
+        <select class="form-select" name="priority" aria-label="Priority">
+          <option value="">All priorities</option>
+          <option th:each="p : ${priorities}" th:value="${p}" th:selected="${p == selectedPriority}" th:text="${p.label}">Priority</option>
+        </select>
+        <select class="form-select" name="status" aria-label="Status">
+          <option value="">All statuses</option>
+          <option th:each="s : ${statuses}" th:value="${s}" th:selected="${s == selectedStatus}" th:text="${s.label}">Status</option>
+        </select>
+        <select class="form-select tasks-sort" name="sort" aria-label="Sort tasks">
+          <option value="due" th:selected="${sort == 'due'}">Sort by: Due date (Asc)</option>
+          <option value="due-desc" th:selected="${sort == 'due-desc'}">Sort by: Due date (Desc)</option>
+          <option value="recent" th:selected="${sort == 'recent'}">Sort by: Newest first</option>
+        </select>
+        <button class="btn btn-outline-secondary btn-sm" type="submit">Apply filters</button>
+        <a th:if="${query != null or selectedCategory != null or selectedStatus != null or selectedPriority != null}" th:href="@{/tasks(clear='true')}" class="btn btn-outline-secondary btn-sm" data-clear-filter="tasks" id="clearTasksFiltersBtn">Clear</a>
+      </form>
+
+      <div class="table-responsive" th:if="${!tasks.isEmpty()}">
+        <table class="table data-table align-middle mb-0">
+          <thead>
+          <tr>
+            <th scope="col">Task</th>
+            <th scope="col">Category</th>
+            <th scope="col">Status</th>
+            <th scope="col">Priority</th>
+            <th scope="col">Progress</th>
+            <th scope="col">Time spent</th>
+            <th scope="col">Due date</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="task : ${tasks}" th:with="percent=${task.status.name() == 'COMPLETED' ? 100 : (task.status.name() == 'IN_PROGRESS' ? 50 : 0)}">
+            <td class="tasks-name">
+              <a th:href="@{/tasks/{id}(id=${task.id})}" th:text="${task.name}">Task</a>
+              <span class="tasks-description" th:if="${!#strings.isEmpty(task.description)}" th:text="${task.description}"></span>
+            </td>
+            <td>
+              <span class="category-mark" th:if="${task.category != null}">
+                <i class="category-dot" th:style="|--category-color:${task.category.color}|"></i>
+                <span th:text="${task.category.name}">Category</span>
+              </span>
+              <span th:unless="${task.category != null}">—</span>
+            </td>
+            <td><span th:class="'status-pill status-' + ${task.status}" th:text="${task.status.label}">Status</span></td>
+            <td><span th:class="'priority-pill priority-' + ${task.priority}" th:text="${task.priority.label}">Priority</span></td>
+            <td><div class="tasks-progress" title="Progress estimated from task status">
+              <progress max="100" th:value="${percent}" th:classappend="${percent == 100} ? 'is-completed'" aria-label="Estimated task progress"></progress>
+              <span th:text="|${percent}%|">0%</span>
+            </div></td>
+            <td>
+              <span class="tasks-time-badge" th:classappend="${task.timerStatus.name() == 'RUNNING'} ? 'is-running' : ''" th:title="'Time spent: ' + ${task.formattedTotalTime}">
+                <svg class="btn-icon" aria-hidden="true" style="width:.85rem;height:.85rem;"><use th:href="@{/images/icons.svg#clock}"/></svg>
+                <span th:text="${task.formattedCompactTime}">0m</span>
+                <span th:if="${task.timerStatus.name() == 'RUNNING'}" class="timer-live-dot" title="Timer is actively running"></span>
+              </span>
+            </td>
+            <td>
+              <span class="tasks-date" th:classappend="${task.overdue} ? 'danger-text'">
+                <svg aria-hidden="true"><use th:attr="href=@{'/images/icons.svg#' + ${task.deadline == null ? 'clock' : 'calendar'}}"/></svg>
+                <span th:text="${task.deadline == null ? 'No due date' : #temporals.format(task.deadline, 'd MMM yyyy')}">No due date</span>
+              </span>
+            </td>
+            <td class="text-end">
+              <div class="dropdown">
+                <button class="tasks-actions" type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport"
+                        aria-expanded="false" th:attr="aria-label=|Actions for ${task.name}|">⋯</button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" th:href="@{/tasks/{id}(id=${task.id})}">View task</a></li>
+                  <li><a class="dropdown-item" th:href="@{/tasks/{id}/edit(id=${task.id})}">Edit task</a></li>
+                  <li class="dropdown-item-text small" th:if="${task.plannedDate != null}" th:text="|Planned ${#temporals.format(task.plannedDate, 'd MMM yyyy')}|"></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <form th:action="@{/tasks/{id}/delete(id=${task.id})}" method="post" data-confirm="Permanently delete this task and all its files? This action cannot be undone.">
+                      <input type="hidden" name="_csrf" th:value="${_csrf}">
+                      <button class="dropdown-item text-danger" type="submit">Delete task</button>
+                    </form>
+                  </li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="empty-state py-5" th:if="${tasks.isEmpty()}">
+        <svg aria-hidden="true"><use th:href="@{/images/icons.svg#search}"/></svg>
+        <h2>No matching tasks</h2>
+        <p>Try adjusting your search or filters, or create a new task.</p>
+        <a class="btn btn-primary btn-sm" th:href="@{/tasks/new}">Create task</a>
+      </div>
+
+      <footer class="tasks-pagination" th:unless="${tasks.isEmpty()}">
+        <span th:text="|Showing ${firstResult}–${lastResult} of ${resultCount} tasks|">Showing tasks</span>
+        <nav th:if="${pageCount > 1}" aria-label="Task pages">
+          <th:block th:if="${currentPage > 1}">
+            <a th:replace="~{:: pageLink(${currentPage - 1}, '‹', 'Previous page')}"></a>
+          </th:block>
+          <th:block th:each="number : ${#numbers.sequence(pageStart, pageEnd)}">
+            <a th:replace="~{:: pageLink(${number}, ${number}, |Page ${number}|)}"></a>
+          </th:block>
+          <th:block th:if="${currentPage < pageCount}">
+            <a th:replace="~{:: pageLink(${currentPage + 1}, '›', 'Next page')}"></a>
+          </th:block>
+        </nav>
+      </footer>
+    </section>
+  </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+<th:block th:remove="all">
+  <article th:fragment="metric(label, count, note, color, icon)" th:class="|surface metric-card metric-card-${color}|">
+    <div th:class="|metric-icon-box icon-box-${color}|">
+      <svg aria-hidden="true"><use th:attr="href=@{'/images/icons.svg#' + ${icon}}"/></svg>
+    </div>
+    <div>
+      <div class="metric-card-label" th:text="${label}">Total tasks</div>
+      <div class="metric-card-value" th:text="${count}">0</div>
+      <div class="metric-card-note" th:text="${note}"></div>
+    </div>
+  </article>
+  <a th:fragment="pageLink(number, label, accessibleLabel)"
+     th:href="@{/tasks(query=${query},category=${selectedCategory},status=${selectedStatus},priority=${selectedPriority},sort=${sort},page=${number})}"
+     th:attr="aria-current=${number == currentPage ? 'page' : null},aria-label=${accessibleLabel}"
+     th:text="${label}">1</a>
+</th:block>
+</body>
+</html>
